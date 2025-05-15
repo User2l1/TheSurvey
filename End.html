@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Early Release</title>
+    <title>End Page</title>
     <style>
         body {
             background-color: black;
@@ -15,13 +15,13 @@
             overflow: hidden;
         }
         #typewriter {
-            font-size: 2.5em;
+            font-size: 2em;
             color: red;
-            margin-top: 15%;
+            margin-top: 5%;
             text-align: center;
         }
         #countdown {
-            margin-top: 30px;
+            margin-top: 20px;
             font-size: 2em;
             color: white;
         }
@@ -29,126 +29,69 @@
             font-size: 0.8em;
             color: gray;
         }
-        #buttons {
-            margin-top: 40px;
-        }
-        button {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.5em;
-            cursor: pointer;
-            margin: 10px;
-            border-radius: 10px;
-        }
-        button:hover {
-            background-color: darkred;
-        }
-        #buyButton {
-            display: none; /* Initially hidden */
-        }
         #thankYouMessage {
-            display: none; /* Initially hidden */
             font-size: 2em;
             color: lime;
-            margin-top: 20px;
+            margin-top: 30px;
+        }
+        footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: gray;
         }
     </style>
 </head>
 <body>
-    <div id="typewriter"></div>
+    <div id="typewriter">Thank you for playing!</div>
     <div id="countdown">
-        <span id="days">5</span><span class="units">D</span>.
-        <span id="hours">10</span><span class="units">Hr's</span>.
-        <span id="minutes">20</span><span class="units">mins</span>.
-        <span id="seconds">99</span><span class="units">s</span>.
-        <span id="milliseconds">999</span><span class="units">ms</span>
+        <span id="days">00</span><span class="units">D</span>.
+        <span id="hours">00</span><span class="units">Hr's</span>.
+        <span id="minutes">00</span><span class="units">mins</span>.
+        <span id="seconds">00</span><span class="units">s</span>
     </div>
-    <div id="buttons">
-        <button onclick="location.href='preview.html'">See Preview of Game</button>
-        <button id="buyButton" onclick="location.href='Buy.html'">Buy</button>
-    </div>
-    <div id="thankYouMessage">Thank you for playing!</div>
+    <footer>The release date is May 26, 2025. Get ready!</footer>
 
     <script>
-        // Typewriter effect for the introduction
-        const text = "Welcome to the Early Release Page...";
-        const typewriterElement = document.getElementById("typewriter");
-        let i = 0;
+        // Release date (UTC) - May 26, 2025
+        const releaseDate = new Date('2025-05-26T00:00:00Z');
 
-        function typeWriter() {
-            if (i < text.length) {
-                typewriterElement.innerHTML += text.charAt(i);
-                i++;
-                setTimeout(typeWriter, 100); // 100ms delay for each character
-            }
-        }
-        typeWriter();
-
-        // Countdown Timer
-        let countdownDays = 5;
-        let countdownHours = 10;
-        let countdownMinutes = 20;
-        let countdownSeconds = 99;
-        let countdownMilliseconds = 999;
-
+        // DOM Elements
         const daysElement = document.getElementById("days");
         const hoursElement = document.getElementById("hours");
         const minutesElement = document.getElementById("minutes");
         const secondsElement = document.getElementById("seconds");
-        const millisecondsElement = document.getElementById("milliseconds");
-        const buyButton = document.getElementById("buyButton");
-        const thankYouMessage = document.getElementById("thankYouMessage");
 
-        function updateTimer() {
-            if (
-                countdownMilliseconds === 0 &&
-                countdownSeconds === 0 &&
-                countdownMinutes === 0 &&
-                countdownHours === 0 &&
-                countdownDays === 0
-            ) {
-                // Timer ends, show Buy button and Thank you message
-                buyButton.style.display = "inline-block";
-                thankYouMessage.style.display = "block";
+        function updateCountdown() {
+            const now = new Date();
+            const timeRemaining = releaseDate - now;
+
+            if (timeRemaining <= 0) {
+                // If the release date has passed
+                daysElement.textContent = "00";
+                hoursElement.textContent = "00";
+                minutesElement.textContent = "00";
+                secondsElement.textContent = "00";
                 return;
             }
 
-            // Decrement the timer
-            if (countdownMilliseconds === 0) {
-                if (countdownSeconds === 0) {
-                    if (countdownMinutes === 0) {
-                        if (countdownHours === 0) {
-                            countdownDays--;
-                            countdownHours = 23;
-                        } else {
-                            countdownHours--;
-                        }
-                        countdownMinutes = 59;
-                    } else {
-                        countdownMinutes--;
-                    }
-                    countdownSeconds = 59;
-                } else {
-                    countdownSeconds--;
-                }
-                countdownMilliseconds = 999;
-            } else {
-                countdownMilliseconds -= 10;
-            }
+            // Calculate time components
+            const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
-            // Update the countdown display
-            daysElement.textContent = countdownDays;
-            hoursElement.textContent = countdownHours;
-            minutesElement.textContent = countdownMinutes;
-            secondsElement.textContent = countdownSeconds;
-            millisecondsElement.textContent = countdownMilliseconds;
+            // Update DOM
+            daysElement.textContent = String(days).padStart(2, '0');
+            hoursElement.textContent = String(hours).padStart(2, '0');
+            minutesElement.textContent = String(minutes).padStart(2, '0');
+            secondsElement.textContent = String(seconds).padStart(2, '0');
 
-            // Continue updating every 10ms
-            setTimeout(updateTimer, 10);
+            // Continue updating
+            setTimeout(updateCountdown, 1000);
         }
-        updateTimer();
+
+        // Start the countdown
+        updateCountdown();
     </script>
 </body>
 </html>
