@@ -7,18 +7,47 @@
     <style>
         body {
             background-color: black;
-            color: white;
+            color: crimson;
             font-family: 'Courier New', Courier, monospace;
             text-align: center;
-            margin-top: 10%;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        h1 {
+            font-size: 3em;
+            text-shadow: 0 0 15px crimson, 0 0 30px red;
+        }
+        p {
+            font-size: 1.5em;
+            margin-bottom: 2em;
+            text-shadow: 0 0 10px crimson;
         }
         a {
-            color: red;
+            color: crimson;
             text-decoration: none;
             font-size: 1.5em;
+            margin: 1em 0;
+            display: inline-block;
+            transition: transform 0.3s ease, text-shadow 0.3s ease;
         }
         a:hover {
             text-decoration: underline;
+            transform: scale(1.1);
+            text-shadow: 0 0 10px crimson, 0 0 20px red;
+        }
+        footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8em;
+            color: grey;
+            text-shadow: 0 0 5px crimson;
         }
     </style>
 </head>
@@ -26,5 +55,8 @@
     <h1>Welcome to the Survey</h1>
     <p>Dare to explore the unknown?</p>
     <a href="Game.html">Start the Game</a>
+    <footer>
+        Credits: User2l (Founder), Copilot (Bug Check/Improvements)
+    </footer>
 </body>
 </html>
