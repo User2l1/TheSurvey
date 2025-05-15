@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game with Animated Intro</title>
+    <title>The Game</title>
     <style>
         body {
             background-color: black;
@@ -33,6 +33,39 @@
         .fade-out {
             opacity: 0 !important;
         }
+        #container {
+            margin: 20% auto;
+            width: 80%;
+        }
+        #question {
+            font-size: 1.5em;
+            text-align: left;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid red;
+            background-color: rgba(255, 0, 0, 0.1);
+            height: 150px;
+        }
+        #buttons {
+            margin-top: 20px;
+        }
+        button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: darkred;
+        }
+        #progress {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -44,9 +77,17 @@
 
     <!-- Game Container -->
     <div id="game-container" class="game-container">
-        <h1>Welcome to the Game!</h1>
-        <p>The game begins now...</p>
-        <button onclick="location.href='Preview.html'">See Preview of Game</button>
+        <div id="container">
+            <div id="question"></div>
+            <div id="buttons">
+                <button onclick="nextQuestion('yes')">Yes</button>
+                <button onclick="nextQuestion('no')">No</button>
+            </div>
+            <div id="progress"></div>
+        </div>
+        <audio id="ambience" autoplay loop>
+            <source src="creepy-ambience.mp3" type="audio/mpeg">
+        </audio>
     </div>
 
     <script>
@@ -83,7 +124,60 @@
 
         // Start the animation
         showIntro(currentIntro);
-    </script>
 
+        // Game logic
+        const questions = [
+            "Do you fear the unknown?",
+            "Have you ever seen shadows move in the night?",
+            "Do you believe in ghosts?",
+            "Have you ever felt watched when you were alone?",
+            "Do you trust the people around you?",
+            "Do you hear whispers when no one is there?",
+            "Have you ever had a nightmare you couldn't wake up from?",
+            "Do you believe in life after death?",
+            "Have you ever seen something you couldn't explain?",
+            "Do you feel safe right now?",
+            "Do you know the meaning of fear?",
+            "Are you sure you're alone right now?",
+            "Do you ever feel like you're being followed?",
+            "Have you ever seen your reflection move on its own?",
+            "Do you believe in monsters?",
+            "Would you sacrifice someone to save yourself?",
+            "Do you think the game is watching you?",
+            "Do you feel your heart racing?",
+            "Have you ever dreamt of your own death?",
+            "Do you think this is just a game?",
+        ];
+        let currentQuestionIndex = 0;
+
+        const questionElement = document.getElementById("question");
+        const progressElement = document.getElementById("progress");
+        
+        function typeWriterEffect(text, i = 0) {
+            if (i < text.length) {
+                questionElement.innerHTML += text.charAt(i);
+                setTimeout(() => typeWriterEffect(text, i + 1), 100);
+            }
+        }
+
+        function showQuestion(index) {
+            questionElement.innerHTML = "";
+            typeWriterEffect(questions[index]);
+            progressElement.innerHTML = `Question ${index + 1} of ${questions.length}`;
+        }
+
+        function nextQuestion(answer) {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            } else {
+                questionElement.innerHTML = "You have completed the game. Or have you?";
+                document.getElementById("buttons").style.display = "none";
+            }
+        }
+
+        // Start the game by showing the first question
+        showQuestion(currentQuestionIndex);
+    </script>
 </body>
 </html>
