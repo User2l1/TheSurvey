@@ -118,9 +118,11 @@
     const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xff0000, 1, 10);
-    pointLight.position.set(0, 5, 0);
-    scene.add(pointLight);
+    const flashlight = new THREE.SpotLight(0xffffff, 1, 10, Math.PI / 8, 0.5);
+    flashlight.position.set(0, 5, 0);
+    flashlight.target.position.set(0, 0, 0);
+    scene.add(flashlight);
+    scene.add(flashlight.target);
 
     // Map (3D Cubes)
     const mapSize = 10;
@@ -138,6 +140,13 @@
         }
       }
     }
+
+    // Exit
+    const exitGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+    const exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const exit = new THREE.Mesh(exitGeometry, exitMaterial);
+    exit.position.set(mapSize / 2 - 1, 0.5, mapSize / 2 - 1);
+    scene.add(exit);
 
     // Player
     const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
@@ -180,6 +189,27 @@
       if (distance > 0.1) {
         monster.position.x += (dx / distance) * speed;
         monster.position.z += (dz / distance) * speed;
+
+        // Leave a mark where the monster moves
+        const markGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+        const markMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const mark = new THREE.Mesh(markGeometry, markMaterial);
+        mark.position.set(monster.position.x, 0.1, monster.position.z);
+        scene.add(mark);
+      }
+    }
+
+    // Collision Detection
+    function checkCollision() {
+      const distance = player.position.distanceTo(monster.position);
+      if (distance < 1) {
+        alert("Game Over! The monster caught you.");
+        window.location.reload();
+      }
+
+      if (player.position.distanceTo(exit.position) < 1) {
+        alert("You Win! You found the exit.");
+        window.location.reload();
       }
     }
 
@@ -188,6 +218,12 @@
       requestAnimationFrame(animate);
       movePlayer();
       moveMonster();
+      checkCollision();
+
+      // Update flashlight position
+      flashlight.position.set(player.position.x, player.position.y + 2, player.position.z);
+      flashlight.target.position.set(player.position.x, 0, player.position.z);
+
       renderer.render(scene, camera);
     }
     animate();
