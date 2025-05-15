@@ -1,15 +1,54 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test</title>
+  <title>3D Horror Game</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
       background-color: black;
+    }
+    #password-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+    #password-screen input {
+      font-size: 24px;
+      padding: 10px;
+      margin: 10px 0;
+      width: 300px;
+      text-align: center;
+      border: 2px solid #444;
+      border-radius: 5px;
+      background-color: #222;
+      color: #fff;
+    }
+    #password-screen button {
+      padding: 10px 20px;
+      font-size: 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #444;
+      color: #fff;
+      cursor: pointer;
+    }
+    #password-screen button:hover {
+      background-color: #666;
+    }
+    #game-container {
+      display: none;
     }
     #overlay {
       position: absolute;
@@ -27,104 +66,109 @@
       top: 20px;
       left: 20px;
     }
-    .health-bar-wrapper {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 300px;
-      height: 20px;
-      background-color: rgba(255, 0, 0, 0.3);
-      border: 2px solid red;
-      border-radius: 5px;
-    }
-    .health-bar {
-      width: 100%;
-      height: 100%;
-      background-color: red;
-      border-radius: 5px;
-    }
   </style>
 </head>
 <body>
-  <!-- 3D Scene -->
-  <div id="game-container"></div>
-  <!-- 2D Overlay -->
-  <div id="overlay">
-    <div class="pixel-text">Find the Exit...</div>
-    <div class="health-bar-wrapper">
-      <div id="health-bar" class="health-bar"></div>
+  <!-- Password Screen -->
+  <div id="password-screen">
+    <h1 style="color: white;">Enter Password to Access the Game</h1>
+    <input id="password-input" type="password" placeholder="Enter Password" />
+    <button id="password-submit">Submit</button>
+    <p id="password-error" style="color: red; display: none;">Incorrect Password</p>
+  </div>
+
+  <!-- Game Container -->
+  <div id="game-container">
+    <!-- 3D Scene -->
+    <div id="game-canvas"></div>
+    <!-- Overlay -->
+    <div id="overlay">
+      <div class="pixel-text">Find the Exit...</div>
     </div>
   </div>
 
   <!-- Three.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // Scene setup
+    // Password Protection
+    const PASSWORD = "Sigma213";
+    const passwordScreen = document.getElementById("password-screen");
+    const gameContainer = document.getElementById("game-container");
+    const passwordInput = document.getElementById("password-input");
+    const passwordSubmit = document.getElementById("password-submit");
+    const passwordError = document.getElementById("password-error");
+
+    passwordSubmit.addEventListener("click", () => {
+      if (passwordInput.value === PASSWORD) {
+        passwordScreen.style.display = "none"; // Hide password screen
+        gameContainer.style.display = "block"; // Show game
+      } else {
+        passwordError.style.display = "block";
+      }
+    });
+
+    // Three.js Setup
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x000000, 1, 15); // Fog for horror effect
-
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('game-container').appendChild(renderer.domElement);
+    document.getElementById('game-canvas').appendChild(renderer.domElement);
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
     scene.add(ambientLight);
 
     const pointLight = new THREE.PointLight(0xff0000, 1, 10);
-    pointLight.position.set(1, 1, 2);
+    pointLight.position.set(0, 5, 0);
     scene.add(pointLight);
 
-    // 3D Objects
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
-    // Ground
-    const groundGeometry = new THREE.PlaneGeometry(20, 20);
-    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -1;
-    scene.add(ground);
-
-    // Health Bar Logic
-    let health = 100; // Starting health
-    const healthBar = document.getElementById("health-bar");
-
-    function decreaseHealth(amount) {
-      health -= amount;
-      if (health < 0) health = 0;
-      healthBar.style.width = `${health}%`;
+    // Map (3D Cubes)
+    const mapSize = 10;
+    const cubeSize = 1;
+    const map = [];
+    for (let x = -mapSize / 2; x < mapSize / 2; x++) {
+      for (let z = -mapSize / 2; z < mapSize / 2; z++) {
+        if (Math.random() > 0.7) { // Randomly place walls
+          const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+          const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+          const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+          cube.position.set(x, 0, z);
+          scene.add(cube);
+          map.push({ x, z });
+        }
+      }
     }
 
-    // Simulate health decrease over time
-    setInterval(() => {
-      decreaseHealth(1);
-    }, 500);
+    // Player
+    const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const player = new THREE.Mesh(playerGeometry, playerMaterial);
+    player.position.set(0, 0.5, 0);
+    scene.add(player);
 
-    // Animate
-    function animate() {
-      requestAnimationFrame(animate);
+    // Monster
+    const monsterGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const monsterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+    const monster = new THREE.Mesh(monsterGeometry, monsterMaterial);
+    monster.position.set(-mapSize / 2 + 1, 0.5, -mapSize / 2 + 1);
+    scene.add(monster);
 
-      // Rotate cube for effect
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+    // Camera Position
+    camera.position.y = 5;
+    camera.lookAt(player.position);
 
-      renderer.render(scene, camera);
+    // Movement Controls
+    const keys = {};
+    window.addEventListener("keydown", (e) => (keys[e.key] = true));
+    window.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+    function movePlayer() {
+      const speed = 0.1;
+      if (keys["ArrowUp"] || keys["w"]) player.position.z -= speed;
+      if (keys["ArrowDown"] || keys["s"]) player.position.z += speed;
+      if (keys["ArrowLeft"] || keys["a"]) player.position.x -= speed;
+      if (keys["ArrowRight"] || keys["d"]) player.position.x += speed;
     }
-    animate();
 
-    // Handle resizing
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
-  </script>
-</body>
-</html>
+    // Monster Pathfinding
+    function moveMonster
