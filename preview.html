@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Preview</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #preview-container {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .preview-image {
+            width: 300px;
+            height: 200px;
+            border: 2px solid red;
+            object-fit: cover;
+        }
+        #no-preview {
+            font-size: 1.5em;
+            color: gray;
+            margin-top: 20px;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Game Previews</h1>
+    <div id="preview-container"></div>
+    <div id="no-preview">No previews currently (<span id="current-date"></span>)</div>
+
+    <footer>Check back later for more updates!</footer>
+
+    <script>
+        // Function to add photos to the preview container
+        const photos = []; // Insert photo URLs as strings here, e.g., ["photo1.jpg", "photo2.jpg"]
+        const previewContainer = document.getElementById("preview-container");
+        const noPreviewMessage = document.getElementById("no-preview");
+
+        function displayPreviews() {
+            if (photos.length > 0) {
+                noPreviewMessage.style.display = "none"; // Hide the "No preview" message
+                photos.forEach(photo => {
+                    const imgElement = document.createElement("img");
+                    imgElement.src = photo;
+                    imgElement.className = "preview-image";
+                    previewContainer.appendChild(imgElement);
+                });
+            } else {
+                noPreviewMessage.style.display = "block"; // Show the "No preview" message
+            }
+        }
+
+        // Display the current date in the "No preview" message
+        const currentDateElement = document.getElementById("current-date");
+        const currentDate = new Date();
+        currentDateElement.textContent = currentDate.toLocaleDateString();
+
+        // Call function to display previews or the "No preview" message
+        displayPreviews();
+    </script>
+</body>
+</html>
