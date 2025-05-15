@@ -58,6 +58,10 @@
             cursor: pointer;
             margin: 5px;
         }
+        button:disabled {
+            background-color: gray;
+            cursor: not-allowed;
+        }
         button:hover {
             background-color: darkred;
         }
@@ -65,6 +69,11 @@
             margin-top: 20px;
             font-size: 1.2em;
             color: red;
+        }
+        #cooldown-message {
+            margin-top: 10px;
+            font-size: 1em;
+            color: lightgray;
         }
     </style>
 </head>
@@ -80,10 +89,11 @@
         <div id="container">
             <div id="question"></div>
             <div id="buttons">
-                <button onclick="nextQuestion('yes')">Yes</button>
-                <button onclick="nextQuestion('no')">No</button>
+                <button id="yes-button" onclick="nextQuestion('yes')">Yes</button>
+                <button id="no-button" onclick="nextQuestion('no')">No</button>
             </div>
             <div id="progress"></div>
+            <div id="cooldown-message"></div>
         </div>
         <audio id="ambience" autoplay loop>
             <source src="creepy-ambience.mp3" type="audio/mpeg">
@@ -149,10 +159,13 @@
             "Do you think this is just a game?",
         ];
         let currentQuestionIndex = 0;
-
+        const cooldownTime = 2000; // Cooldown time in milliseconds
         const questionElement = document.getElementById("question");
         const progressElement = document.getElementById("progress");
-        
+        const cooldownMessage = document.getElementById("cooldown-message");
+        const yesButton = document.getElementById("yes-button");
+        const noButton = document.getElementById("no-button");
+
         function typeWriterEffect(text, i = 0) {
             if (i < text.length) {
                 questionElement.innerHTML += text.charAt(i);
@@ -166,10 +179,22 @@
             progressElement.innerHTML = `Question ${index + 1} of ${questions.length}`;
         }
 
+        function setCooldown() {
+            yesButton.disabled = true;
+            noButton.disabled = true;
+            cooldownMessage.innerHTML = "Please wait...";
+            setTimeout(() => {
+                yesButton.disabled = false;
+                noButton.disabled = false;
+                cooldownMessage.innerHTML = "";
+            }, cooldownTime);
+        }
+
         function nextQuestion(answer) {
+            setCooldown();
             if (currentQuestionIndex < questions.length - 1) {
                 currentQuestionIndex++;
-                showQuestion(currentQuestionIndex);
+                setTimeout(() => showQuestion(currentQuestionIndex), cooldownTime);
             } else {
                 questionElement.innerHTML = "You have completed the game. Or have you?";
                 document.getElementById("buttons").style.display = "none";
