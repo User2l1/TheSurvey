@@ -15,13 +15,13 @@
             overflow: hidden;
         }
         #typewriter {
-            font-size: 2em;
+            font-size: 2.5em;
             color: red;
-            margin-top: 20%;
+            margin-top: 15%;
             text-align: center;
         }
         #countdown {
-            margin-top: 20px;
+            margin-top: 30px;
             font-size: 2em;
             color: white;
         }
@@ -30,7 +30,7 @@
             color: gray;
         }
         #buttons {
-            margin-top: 30px;
+            margin-top: 40px;
         }
         button {
             background-color: red;
@@ -48,6 +48,12 @@
         #buyButton {
             display: none; /* Initially hidden */
         }
+        #thankYouMessage {
+            display: none; /* Initially hidden */
+            font-size: 2em;
+            color: lime;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -56,11 +62,14 @@
         <span id="days">5</span><span class="units">D</span>.
         <span id="hours">10</span><span class="units">Hr's</span>.
         <span id="minutes">20</span><span class="units">mins</span>.
+        <span id="seconds">99</span><span class="units">s</span>.
+        <span id="milliseconds">999</span><span class="units">ms</span>
     </div>
     <div id="buttons">
         <button onclick="location.href='preview.html'">See Preview of Game</button>
         <button id="buyButton" onclick="location.href='Buy.html'">Buy</button>
     </div>
+    <div id="thankYouMessage">Thank you for playing!</div>
 
     <script>
         // Typewriter effect for the introduction
@@ -81,39 +90,63 @@
         let countdownDays = 5;
         let countdownHours = 10;
         let countdownMinutes = 20;
+        let countdownSeconds = 99;
+        let countdownMilliseconds = 999;
 
         const daysElement = document.getElementById("days");
         const hoursElement = document.getElementById("hours");
         const minutesElement = document.getElementById("minutes");
+        const secondsElement = document.getElementById("seconds");
+        const millisecondsElement = document.getElementById("milliseconds");
         const buyButton = document.getElementById("buyButton");
+        const thankYouMessage = document.getElementById("thankYouMessage");
 
         function updateTimer() {
-            if (countdownMinutes === 0 && countdownHours === 0 && countdownDays === 0) {
-                // Timer ends, show Buy button
+            if (
+                countdownMilliseconds === 0 &&
+                countdownSeconds === 0 &&
+                countdownMinutes === 0 &&
+                countdownHours === 0 &&
+                countdownDays === 0
+            ) {
+                // Timer ends, show Buy button and Thank you message
                 buyButton.style.display = "inline-block";
+                thankYouMessage.style.display = "block";
                 return;
             }
 
             // Decrement the timer
-            if (countdownMinutes === 0) {
-                if (countdownHours === 0) {
-                    countdownDays--;
-                    countdownHours = 23;
+            if (countdownMilliseconds === 0) {
+                if (countdownSeconds === 0) {
+                    if (countdownMinutes === 0) {
+                        if (countdownHours === 0) {
+                            countdownDays--;
+                            countdownHours = 23;
+                        } else {
+                            countdownHours--;
+                        }
+                        countdownMinutes = 59;
+                    } else {
+                        countdownMinutes--;
+                    }
+                    countdownSeconds = 59;
                 } else {
-                    countdownHours--;
+                    countdownSeconds--;
                 }
-                countdownMinutes = 59;
+                countdownMilliseconds = 999;
             } else {
-                countdownMinutes--;
+                countdownMilliseconds -= 10;
             }
 
             // Update the countdown display
             daysElement.textContent = countdownDays;
             hoursElement.textContent = countdownHours;
             minutesElement.textContent = countdownMinutes;
+            secondsElement.textContent = countdownSeconds;
+            millisecondsElement.textContent = countdownMilliseconds;
 
-            // Continue updating every second
-            setTimeout(updateTimer, 1000);
+            // Continue updating every 10ms
+            setTimeout(updateTimer, 10);
         }
         updateTimer();
     </script>
