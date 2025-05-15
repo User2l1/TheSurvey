@@ -171,4 +171,26 @@
     }
 
     // Monster Pathfinding
-    function moveMonster
+    function moveMonster() {
+      const speed = 0.05;
+      const dx = player.position.x - monster.position.x;
+      const dz = player.position.z - monster.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+
+      if (distance > 0.1) {
+        monster.position.x += (dx / distance) * speed;
+        monster.position.z += (dz / distance) * speed;
+      }
+    }
+
+    // Game Loop
+    function animate() {
+      requestAnimationFrame(animate);
+      movePlayer();
+      moveMonster();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
