@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Early Release</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #typewriter {
+            font-size: 2em;
+            color: red;
+            margin-top: 20%;
+            text-align: center;
+        }
+        #countdown {
+            margin-top: 20px;
+            font-size: 2em;
+            color: white;
+        }
+        .units {
+            font-size: 0.8em;
+            color: gray;
+        }
+        #buttons {
+            margin-top: 30px;
+        }
+        button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5em;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 10px;
+        }
+        button:hover {
+            background-color: darkred;
+        }
+        #buyButton {
+            display: none; /* Initially hidden */
+        }
+    </style>
+</head>
+<body>
+    <div id="typewriter"></div>
+    <div id="countdown">
+        <span id="days">5</span><span class="units">D</span>.
+        <span id="hours">10</span><span class="units">Hr's</span>.
+        <span id="minutes">20</span><span class="units">mins</span>.
+    </div>
+    <div id="buttons">
+        <button onclick="location.href='preview.html'">See Preview of Game</button>
+        <button id="buyButton" onclick="location.href='Buy.html'">Buy</button>
+    </div>
+
+    <script>
+        // Typewriter effect for the introduction
+        const text = "Welcome to the Early Release Page...";
+        const typewriterElement = document.getElementById("typewriter");
+        let i = 0;
+
+        function typeWriter() {
+            if (i < text.length) {
+                typewriterElement.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 100); // 100ms delay for each character
+            }
+        }
+        typeWriter();
+
+        // Countdown Timer
+        let countdownDays = 5;
+        let countdownHours = 10;
+        let countdownMinutes = 20;
+
+        const daysElement = document.getElementById("days");
+        const hoursElement = document.getElementById("hours");
+        const minutesElement = document.getElementById("minutes");
+        const buyButton = document.getElementById("buyButton");
+
+        function updateTimer() {
+            if (countdownMinutes === 0 && countdownHours === 0 && countdownDays === 0) {
+                // Timer ends, show Buy button
+                buyButton.style.display = "inline-block";
+                return;
+            }
+
+            // Decrement the timer
+            if (countdownMinutes === 0) {
+                if (countdownHours === 0) {
+                    countdownDays--;
+                    countdownHours = 23;
+                } else {
+                    countdownHours--;
+                }
+                countdownMinutes = 59;
+            } else {
+                countdownMinutes--;
+            }
+
+            // Update the countdown display
+            daysElement.textContent = countdownDays;
+            hoursElement.textContent = countdownHours;
+            minutesElement.textContent = countdownMinutes;
+
+            // Continue updating every second
+            setTimeout(updateTimer, 1000);
+        }
+        updateTimer();
+    </script>
+</body>
+</html>
