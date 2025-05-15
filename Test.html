@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Protected Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+    }
+
+    .password-container {
+      text-align: center;
+    }
+
+    .password-container input[type="password"],
+    .password-container input[type="text"] {
+      font-size: 24px;
+      padding: 10px;
+      margin: 10px 0;
+      width: 300px;
+      text-align: center;
+      border: 2px solid #444;
+      border-radius: 5px;
+      background-color: #222;
+      color: #fff;
+    }
+
+    .eye-icon {
+      cursor: pointer;
+      position: relative;
+      right: 35px;
+      top: -42px;
+      font-size: 24px;
+      color: #888;
+    }
+
+    .eye-icon:hover {
+      color: #fff;
+    }
+
+    .button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      font-size: 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #444;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: #666;
+    }
+
+    .error-message {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="password-container">
+    <h1>Enter Password to Access the Game</h1>
+    <form id="password-form">
+      <input 
+        id="password-input" 
+        type="password" 
+        placeholder="Enter Password" 
+        maxlength="20"
+      />
+      <span id="toggle-password" class="eye-icon">👁️</span>
+      <button type="submit" class="button">Submit</button>
+    </form>
+    <p id="error-message" class="error-message"></p>
+  </div>
+
+  <script>
+    const password = "Sigma213"; // Pre-set password
+    const passwordInput = document.getElementById("password-input");
+    const togglePassword = document.getElementById("toggle-password");
+    const errorMessage = document.getElementById("error-message");
+    const passwordForm = document.getElementById("password-form");
+
+    // Toggle password visibility
+    togglePassword.addEventListener("click", () => {
+      const type = passwordInput.type === "password" ? "text" : "password";
+      passwordInput.type = type;
+
+      // Change eye icon
+      togglePassword.textContent = type === "password" ? "👁️" : "🙈";
+    });
+
+    // Form submission handler
+    passwordForm.addEventListener("submit", (e) => {
+      e.preventDefault(); // Prevent page reload
+
+      if (passwordInput.value === password) {
+        // Redirect to game or show success message
+        alert("Access Granted! Redirecting to the game...");
+        window.location.href = "game.html"; // Replace with the actual game URL
+      } else {
+        // Show error message
+        errorMessage.textContent = "Incorrect Password. Please try again.";
+      }
+    });
+  </script>
+</body>
+</html>
