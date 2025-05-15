@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Game</title>
+    <title>Game with Animated Intro</title>
     <style>
         body {
             background-color: black;
@@ -14,157 +14,76 @@
             padding: 0;
             overflow: hidden;
         }
-        #container {
-            margin: 20% auto;
-            width: 80%;
-            display: none;
-        }
-        #question {
-            font-size: 1.5em;
-            text-align: left;
-            margin: 0 auto;
-            padding: 20px;
-            border: 2px solid red;
-            background-color: rgba(255, 0, 0, 0.1);
-            height: 150px;
-        }
-        #buttons {
-            margin-top: 20px;
-        }
-        button {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1.2em;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:disabled {
-            background-color: gray;
-            cursor: not-allowed;
-        }
-        button:hover:enabled {
-            background-color: darkred;
-        }
-        #progress {
-            margin-top: 20px;
-            font-size: 1.2em;
-            color: red;
-        }
-        #ending {
-            display: none;
-            background-color: black;
-            color: red;
-            font-size: 3em;
-            text-align: center;
+        .intro-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             height: 100vh;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
+            font-size: 2.5em;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
         }
-        #earlyRelease {
+        .game-container {
             display: none;
-            position: absolute;
-            font-size: 1.5em;
-            color: white;
-            animation: swipeAround 5s linear infinite;
+            padding: 20px;
         }
-        @keyframes swipeAround {
-            0% { top: 10%; left: 10%; }
-            25% { top: 70%; left: 10%; }
-            50% { top: 70%; left: 70%; }
-            75% { top: 10%; left: 70%; }
-            100% { top: 10%; left: 10%; }
+        .fade-in {
+            opacity: 1 !important;
+        }
+        .fade-out {
+            opacity: 0 !important;
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <div id="question"></div>
-        <div id="buttons">
-            <button id="yesButton" onclick="nextQuestion('yes')" disabled>Yes</button>
-            <button id="noButton" onclick="nextQuestion('no')" disabled>No</button>
-        </div>
-        <div id="progress"></div>
+
+    <!-- Intro Containers -->
+    <div id="intro1" class="intro-container">Brought to you by GitHub Pages</div>
+    <div id="intro2" class="intro-container">Produced by User2lx/User2l1</div>
+    <div id="intro3" class="intro-container">This is a demo</div>
+
+    <!-- Game Container -->
+    <div id="game-container" class="game-container">
+        <h1>Welcome to the Game!</h1>
+        <p>The game begins now...</p>
+        <button onclick="location.href='Preview.html'">See Preview of Game</button>
     </div>
 
-    <div id="ending">
-        <p>You have reached the end...</p>
-        <p>But something still lingers...</p>
-        <div id="earlyRelease">This is an early release</div>
-    </div>
-
-    <audio id="ambience" autoplay loop>
-        <source src="creepy-ambience.mp3" type="audio/mpeg">
-    </audio>
     <script>
-        const questions = [
-            "Do you fear the unknown?",
-            "Have you ever seen shadows move in the night?",
-            "Do you believe in ghosts?",
-            "Have you ever felt watched when you were alone?",
-            "Do you trust the people around you?",
-            "Do you hear whispers when no one is there?",
-            "Have you ever had a nightmare you couldn't wake up from?",
-            "Do you believe in life after death?",
-            "Have you ever seen something you couldn't explain?",
-            "Do you feel safe right now?",
-            "Do you know the meaning of fear?",
-            "Are you sure you're alone right now?",
-            "Do you ever feel like you're being followed?",
-            "Have you ever seen your reflection move on its own?",
-            "Do you believe in monsters?",
-            "Would you sacrifice someone to save yourself?",
-            "Do you think the game is watching you?",
-            "Do you feel your heart racing?",
-            "Have you ever dreamt of your own death?",
-            "Do you think this is just a game?",
+        // Animation sequence
+        const intros = [
+            document.getElementById('intro1'),
+            document.getElementById('intro2'),
+            document.getElementById('intro3')
         ];
-        let currentQuestionIndex = 0;
-        const questionElement = document.getElementById("question");
-        const progressElement = document.getElementById("progress");
-        const yesButton = document.getElementById("yesButton");
-        const noButton = document.getElementById("noButton");
-        const endingElement = document.getElementById("ending");
-        const earlyReleaseText = document.getElementById("earlyRelease");
+        const gameContainer = document.getElementById('game-container');
+        let currentIntro = 0;
 
-        function typeWriterEffect(text, i = 0) {
-            if (i < text.length) {
-                questionElement.innerHTML += text.charAt(i);
-                setTimeout(() => typeWriterEffect(text, i + 1), 100);
-            } else {
-                // Enable buttons after animation is complete
-                yesButton.disabled = false;
-                noButton.disabled = false;
+        function showIntro(index) {
+            if (index >= intros.length) {
+                // All intros are done, show the game
+                gameContainer.style.display = 'block';
+                return;
             }
+
+            const intro = intros[index];
+            // Fade in the current intro
+            intro.classList.add('fade-in');
+            setTimeout(() => {
+                // Fade out after 3 seconds
+                intro.classList.remove('fade-in');
+                intro.classList.add('fade-out');
+                setTimeout(() => {
+                    // Move to the next intro
+                    intro.style.display = 'none'; // Hide completed intro
+                    showIntro(index + 1);
+                }, 1000); // Fade-out duration
+            }, 3000); // Display duration
         }
 
-        function showQuestion(index) {
-            questionElement.innerHTML = "";
-            yesButton.disabled = true;
-            noButton.disabled = true;
-            typeWriterEffect(questions[index]);
-            progressElement.innerHTML = `Question ${index + 1} of ${questions.length}`;
-        }
-
-        function nextQuestion(answer) {
-            if (currentQuestionIndex < questions.length - 1) {
-                currentQuestionIndex++;
-                showQuestion(currentQuestionIndex);
-            } else {
-                endGame();
-            }
-        }
-
-        function endGame() {
-    window.location.href = "End.html";
-}
-
-        // Start the game by showing the first question
-        document.getElementById("container").style.display = "block";
-        showQuestion(currentQuestionIndex);
+        // Start the animation
+        showIntro(currentIntro);
     </script>
+
 </body>
 </html>
