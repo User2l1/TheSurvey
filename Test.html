@@ -2,231 +2,299 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D Horror Game</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: black; }
-    #password-screen {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: black; display: flex; flex-direction: column;
-      justify-content: center; align-items: center; z-index: 10;
-    }
-    #password-screen input {
-      font-size: 24px; padding: 10px; margin: 10px 0; width: 300px;
-      text-align: center; border: 2px solid #444; border-radius: 5px;
-      background-color: #222; color: #fff;
-    }
-    #password-screen button {
-      padding: 10px 20px; font-size: 20px; border: none; border-radius: 5px;
-      background-color: #444; color: #fff; cursor: pointer;
-    }
-    #password-screen button:hover { background-color: #666; }
-    #game-container { display: none; }
-    #overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    body { margin: 0; overflow: hidden; background: #000; }
+    #overlayText {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      color: #f00; font-size: 32px; text-shadow: 2px 2px #000; z-index: 20;
       pointer-events: none;
+      font-family: monospace;
     }
-    .pixel-text {
-      color: red; font-size: 32px; text-shadow: 2px 2px black;
-      position: absolute; top: 20px; left: 20px;
+    #gameover, #youwin {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.95); color: #fff; font-size: 3em;
+      font-family: monospace; text-align: center; align-items: center; justify-content: center;
+      flex-direction: column; z-index: 100;
+    }
+    #gameover.show, #youwin.show {
+      display: flex;
+    }
+    #keypad {
+      display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      background: #222; border: 2px solid #f00; padding: 30px; border-radius: 10px; z-index: 99;
+      font-family: monospace; color: #fff;
+    }
+    #keypad input {
+      font-size: 2em; width: 120px; text-align: center; margin-bottom: 20px; background: #000; color: #fff; border: 1px solid #fff;
+    }
+    #keypad button {
+      font-size: 1.5em; margin-top: 10px; background: #400; color: #fff; border: none; padding: 10px 30px;
+      cursor: pointer; border-radius: 6px;
+    }
+    .paperNote {
+      position: fixed;
+      color: #0f0;
+      left: 50%; top: 50%; transform: translate(-50%,-50%);
+      background: #111; padding: 25px 40px; border: 2px solid #0f0;
+      font-size: 2em; font-family: monospace; border-radius: 10px; z-index: 80;
+      display: none;
+    }
+    #hint {
+      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+      color: #fff; font-size: 1.3em; background: rgba(0,0,0,0.5); padding: 6px 18px; border-radius: 8px;
+      pointer-events: none; z-index: 50; font-family: monospace;
     }
   </style>
 </head>
 <body>
-  <!-- Password Screen -->
-  <div id="password-screen">
-    <h1 style="color: white;">Enter Password to Access the Game</h1>
-    <input id="password-input" type="password" placeholder="Enter Password" />
-    <button id="password-submit">Submit</button>
-    <p id="password-error" style="color: red; display: none;">Incorrect Password</p>
+<div id="overlayText">Find the exit and the code papers...</div>
+<div id="hint"></div>
+
+<div id="gameover"><div>GAME OVER<br><span style="font-size:0.5em;">The monster caught you.</span><br><button onclick="location.reload()">Retry</button></div></div>
+<div id="youwin"><div>YOU ESCAPED!<br><span style="font-size:0.5em;">You survived the horror.</span><br><button onclick="location.reload()">Play Again</button></div></div>
+<div id="keypad">
+  <div>Enter Exit Code:</div>
+  <input type="text" maxlength="4" id="keypadInput" autocomplete="off"/>
+  <div>
+    <button onclick="submitKeypad()">Submit</button>
+    <button onclick="closeKeypad()">Cancel</button>
   </div>
+  <div id="keypadMsg" style="color:#f00; margin-top:10px;"></div>
+</div>
+<div id="paperPopup" class="paperNote"></div>
 
-  <!-- Game Container -->
-  <div id="game-container">
-    <div id="game-canvas"></div>
-    <div id="overlay">
-      <div class="pixel-text">Find the Exit...</div>
-    </div>
-  </div>
+<div id="game-canvas"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const mapSize = 20;
+const cubeSize = 1;
+const wallChance = 0.3;
+const playerSpeed = 0.6;
+const monsterChaseDist = 4;
+let code = "";
+let paperLocations = [];
+let paperFound = Array(5).fill(false);
+let exitUnlocked = false;
+let keypadOpen = false, canOpenKeypad = false;
+let player, monster, exitDoor, scene, camera, renderer, map = [];
+let keys = {};
+let lastPos = {x: 0, z: 0};
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    // Password Protection
-    const PASSWORD = "Sigma213";
-    const passwordScreen = document.getElementById("password-screen");
-    const gameContainer = document.getElementById("game-container");
-    const passwordInput = document.getElementById("password-input");
-    const passwordSubmit = document.getElementById("password-submit");
-    const passwordError = document.getElementById("password-error");
+// Generate random 4-digit code
+code = Math.floor(1000 + Math.random() * 9000).toString();
 
-    let gameStarted = false;
+// Generate 5 random paper locations not at start, exit, or overlapping
+function generatePapers() {
+  paperLocations = [];
+  while (paperLocations.length < 5) {
+    let px = Math.floor(Math.random() * (mapSize-2)) - mapSize/2 + 1;
+    let pz = Math.floor(Math.random() * (mapSize-2)) - mapSize/2 + 1;
+    // Avoid start, exit, or duplicates
+    if ((Math.abs(px)<2 && Math.abs(pz)<2) || (Math.abs(px-(mapSize/2-2))<2 && Math.abs(pz-(mapSize/2-2))<2)) continue;
+    if (paperLocations.some(loc => loc.x===px&&loc.z===pz)) continue;
+    paperLocations.push({x:px,z:pz});
+  }
+}
+generatePapers();
 
-    passwordSubmit.addEventListener("click", () => {
-      if (passwordInput.value === PASSWORD) {
-        passwordScreen.style.display = "none";
-        gameContainer.style.display = "block";
-        if (!gameStarted) {
-          gameStarted = true;
-          initGame();
-        }
-      } else {
-        passwordError.style.display = "block";
+function showHint(msg) {
+  document.getElementById("hint").textContent = msg;
+  setTimeout(()=>{document.getElementById("hint").textContent="";},2000);
+}
+
+function showPaper(index) {
+  let div = document.getElementById("paperPopup");
+  div.textContent = `You found a note!\nThe code is: ${code}`;
+  div.style.display = "block";
+  setTimeout(()=>{div.style.display="none";}, 2500);
+  paperFound[index]=true;
+}
+
+// Keypad UI logic
+function openKeypad() {
+  if (keypadOpen) return;
+  keypadOpen = true;
+  document.getElementById('keypadInput').value = "";
+  document.getElementById('keypadMsg').textContent = "";
+  document.getElementById('keypad').style.display = "block";
+  document.getElementById('keypadInput').focus();
+}
+function closeKeypad() {
+  keypadOpen = false;
+  document.getElementById('keypad').style.display = "none";
+}
+function submitKeypad() {
+  let val = document.getElementById('keypadInput').value.trim();
+  if (val === code) {
+    exitUnlocked = true;
+    document.getElementById('keypadMsg').textContent = "Unlocked!";
+    setTimeout(()=>{closeKeypad(); showHint("The exit is open!");}, 700);
+  } else {
+    document.getElementById('keypadMsg').textContent = "Wrong code!";
+  }
+}
+
+// Main game setup
+function startGame() {
+// THREE.js scene
+scene = new THREE.Scene();
+camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.getElementById('game-canvas').appendChild(renderer.domElement);
+
+// Map generation (walls array)
+map = [];
+for (let x = -mapSize/2; x < mapSize/2; x++) {
+  for (let z = -mapSize/2; z < mapSize/2; z++) {
+    // Border always wall, rest random
+    if (x === -mapSize/2||x===mapSize/2-1||z===-mapSize/2||z===mapSize/2-1 || Math.random()<wallChance) {
+      // Don't wall start and exit or papers
+      let skip=false;
+      if ((Math.abs(x)<2 && Math.abs(z)<2) || (Math.abs(x-(mapSize/2-2))<2 && Math.abs(z-(mapSize/2-2))<2) ||
+        paperLocations.some(loc=>loc.x===x&&loc.z===z)) skip=true;
+      if (!skip) {
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize),
+          new THREE.MeshStandardMaterial({ color: 0x222222 }));
+        cube.position.set(x, 0.5, z);
+        scene.add(cube);
+        map.push({x, z});
       }
-    });
-
-    // Game logic only starts after password
-    function initGame() {
-      // Three.js Setup
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.getElementById('game-canvas').appendChild(renderer.domElement);
-
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0x404040);
-      scene.add(ambientLight);
-
-      const flashlight = new THREE.SpotLight(0xffffff, 1, 10, Math.PI / 8, 0.5);
-      flashlight.position.set(0, 5, 0);
-      flashlight.target.position.set(0, 0, 0);
-      scene.add(flashlight);
-      scene.add(flashlight.target);
-
-      // Map (3D Cubes)
-      const mapSize = 10;
-      const cubeSize = 1;
-      const map = [];
-      for (let x = -mapSize / 2; x < mapSize / 2; x++) {
-        for (let z = -mapSize / 2; z < mapSize / 2; z++) {
-          if (Math.random() > 0.7) {
-            const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-            const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-            cube.position.set(x, 0, z);
-            scene.add(cube);
-            map.push({ x, z });
-          }
-        }
-      }
-
-      // Exit
-      const exitGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
-      const exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-      const exit = new THREE.Mesh(exitGeometry, exitMaterial);
-      exit.position.set(mapSize / 2 - 1, 0.5, mapSize / 2 - 1);
-      scene.add(exit);
-
-      // Player
-      const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-      const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-      const player = new THREE.Mesh(playerGeometry, playerMaterial);
-      player.position.set(0, 0.5, 0);
-      scene.add(player);
-
-      // Monster with patrol points and anti-stuck
-      const monsterGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-      const monsterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
-      const monster = new THREE.Mesh(monsterGeometry, monsterMaterial);
-      monster.position.set(-mapSize / 2 + 1, 0.5, -mapSize / 2 + 1);
-      scene.add(monster);
-
-      // Monster patrol points
-      const patrolPoints = [
-        { x: -mapSize/2+1, z: -mapSize/2+1 },
-        { x: mapSize/2-2, z: -mapSize/2+1 },
-        { x: mapSize/2-2, z: mapSize/2-2 },
-        { x: -mapSize/2+1, z: mapSize/2-2 }
-      ];
-      let currentPatrol = 0;
-      let monsterStuckCounter = 0;
-      let lastMonsterPos = {x: monster.position.x, z: monster.position.z};
-
-      // Camera Position
-      camera.position.y = 5;
-      camera.lookAt(player.position);
-
-      // Movement Controls
-      const keys = {};
-      window.addEventListener("keydown", (e) => (keys[e.key] = true));
-      window.addEventListener("keyup", (e) => (keys[e.key] = false));
-
-      function movePlayer() {
-        const speed = 0.1;
-        if (keys["ArrowUp"] || keys["w"]) player.position.z -= speed;
-        if (keys["ArrowDown"] || keys["s"]) player.position.z += speed;
-        if (keys["ArrowLeft"] || keys["a"]) player.position.x -= speed;
-        if (keys["ArrowRight"] || keys["d"]) player.position.x += speed;
-      }
-
-      // Monster AI
-      function moveMonster() {
-        const chaseSpeed = 0.09;
-        const patrolSpeed = 0.05;
-        const dx = player.position.x - monster.position.x;
-        const dz = player.position.z - monster.position.z;
-        const distToPlayer = Math.sqrt(dx * dx + dz * dz);
-
-        if (distToPlayer < 0.7) {
-          // Chase player
-          monster.position.x += (dx / distToPlayer) * chaseSpeed;
-          monster.position.z += (dz / distToPlayer) * chaseSpeed;
-          monsterStuckCounter = 0; // reset anti-stuck during chase
-        } else {
-          // Patrol
-          const patrol = patrolPoints[currentPatrol];
-          const pdx = patrol.x - monster.position.x;
-          const pdz = patrol.z - monster.position.z;
-          const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
-          if (pdist > 0.1) {
-            monster.position.x += (pdx / pdist) * patrolSpeed;
-            monster.position.z += (pdz / pdist) * patrolSpeed;
-          } else {
-            currentPatrol = (currentPatrol + 1) % patrolPoints.length;
-          }
-
-          // Anti-stuck: if monster doesn't move much for 120 frames, jump to next patrol point
-          if (
-            Math.abs(monster.position.x - lastMonsterPos.x) < 0.01 &&
-            Math.abs(monster.position.z - lastMonsterPos.z) < 0.01
-          ) {
-            monsterStuckCounter++;
-            if (monsterStuckCounter > 120) {
-              currentPatrol = (currentPatrol + 1) % patrolPoints.length;
-              monsterStuckCounter = 0;
-            }
-          } else {
-            monsterStuckCounter = 0;
-          }
-          lastMonsterPos = {x: monster.position.x, z: monster.position.z};
-        }
-      }
-
-      // Collision Detection
-      function checkCollision() {
-        const distance = player.position.distanceTo(monster.position);
-        if (distance < 1) {
-          alert("Game Over! The monster caught you.");
-          window.location.reload();
-        }
-        if (player.position.distanceTo(exit.position) < 1) {
-          alert("You Win! You found the exit.");
-          window.location.reload();
-        }
-      }
-
-      // Game Loop
-      function animate() {
-        requestAnimationFrame(animate);
-        movePlayer();
-        moveMonster();
-        checkCollision();
-        flashlight.position.set(player.position.x, player.position.y + 2, player.position.z);
-        flashlight.target.position.set(player.position.x, 0, player.position.z);
-        renderer.render(scene, camera);
-      }
-      animate();
     }
-  </script>
+  }
+}
+
+// Papers
+for (let i=0;i<5;i++) {
+  let paper = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.05,0.5),new THREE.MeshStandardMaterial({color:0xffff00}));
+  paper.position.set(paperLocations[i].x, 0.55, paperLocations[i].z);
+  paper.name = "paper"+i;
+  scene.add(paper);
+}
+
+// Exit Door
+exitDoor = new THREE.Mesh(new THREE.BoxGeometry(1,1.6,0.2), new THREE.MeshStandardMaterial({color:0x00ff00}));
+exitDoor.position.set(mapSize/2-2,0.8,mapSize/2-2);
+exitDoor.name = "exit";
+scene.add(exitDoor);
+
+// Player
+player = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshStandardMaterial({color: 0x00ff00}));
+player.position.set(0,0.5,0);
+scene.add(player);
+
+// Monster
+monster = new THREE.Mesh(new THREE.SphereGeometry(0.5,32,32), new THREE.MeshStandardMaterial({color:0xff0000,transparent:true,opacity:0.5}));
+monster.position.set(-mapSize/2+2,0.5,-mapSize/2+2);
+scene.add(monster);
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x404040));
+let flashlight = new THREE.SpotLight(0xffffff,1,10,Math.PI/8,0.5);
+flashlight.position.set(0,2,0);
+flashlight.target.position.set(0,0,0);
+scene.add(flashlight);
+scene.add(flashlight.target);
+
+camera.position.y = 4;
+
+// Controls
+window.addEventListener("keydown", e => keys[e.key]=true);
+window.addEventListener("keyup", e => keys[e.key]=false);
+
+// Collision helpers
+function isBlocked(x, z) {
+  return map.some(b => Math.abs(b.x - x) < 0.7 && Math.abs(b.z - z) < 0.7);
+}
+
+// Animation/game loop
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Player movement & collision
+  let nextX = player.position.x, nextZ = player.position.z;
+  if (keys["ArrowUp"] || keys["w"]) nextZ -= playerSpeed;
+  if (keys["ArrowDown"] || keys["s"]) nextZ += playerSpeed;
+  if (keys["ArrowLeft"] || keys["a"]) nextX -= playerSpeed;
+  if (keys["ArrowRight"] || keys["d"]) nextX += playerSpeed;
+  // Only move if not blocked
+  if (!isBlocked(nextX, nextZ)) {
+    player.position.x = nextX;
+    player.position.z = nextZ;
+  }
+
+  // Camera follows player smoothly
+  camera.position.x += (player.position.x - camera.position.x)*0.2;
+  camera.position.z += (player.position.z - camera.position.z)*0.2;
+  camera.lookAt(player.position);
+
+  // Flashlight follows player
+  flashlight.position.set(player.position.x, player.position.y+2, player.position.z);
+  flashlight.target.position.set(player.position.x, 0, player.position.z);
+
+  // Monster AI (patrol/chase)
+  let dx = player.position.x - monster.position.x;
+  let dz = player.position.z - monster.position.z;
+  let dist = Math.sqrt(dx*dx + dz*dz);
+  let mx = monster.position.x, mz = monster.position.z;
+
+  if (dist < monsterChaseDist) {
+    // Chase, but obey collision
+    let moveX = (dx/dist) * 0.45;
+    let moveZ = (dz/dist) * 0.45;
+    if (!isBlocked(monster.position.x+moveX, monster.position.z+moveZ)) {
+      monster.position.x += moveX;
+      monster.position.z += moveZ;
+    }
+  }
+
+  // Monster collision with blocks - bounce back if stuck
+  if (isBlocked(monster.position.x, monster.position.z)) {
+    monster.position.x = lastPos.x;
+    monster.position.z = lastPos.z;
+  }
+  lastPos.x = monster.position.x;
+  lastPos.z = monster.position.z;
+
+  // Collision: Player & monster
+  if (player.position.distanceTo(monster.position) < 1) {
+    document.getElementById('gameover').classList.add('show');
+    return;
+  }
+
+  // Picking up paper notes
+  for (let i=0;i<5;i++) {
+    if (!paperFound[i] && Math.abs(player.position.x - paperLocations[i].x)<0.7 && Math.abs(player.position.z - paperLocations[i].z)<0.7) {
+      showPaper(i);
+      paperFound[i]=true;
+      // Remove paper from scene
+      let obj = scene.getObjectByName("paper"+i);
+      if(obj) scene.remove(obj);
+    }
+  }
+
+  // Exit/Keypad logic
+  if (player.position.distanceTo(exitDoor.position)<1.2) {
+    if (!exitUnlocked && !keypadOpen) {
+      openKeypad();
+    }
+    if (exitUnlocked) {
+      document.getElementById('youwin').classList.add('show');
+      return;
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+animate();
+}
+startGame();
+
+// Keypad input events
+document.getElementById('keypadInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter') submitKeypad();
+});
+</script>
 </body>
 </html>
