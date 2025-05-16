@@ -5,96 +5,138 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>End Page</title>
     <style>
+        /* Animated gradient background */
         body {
-            background-color: black;
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
-            text-align: center;
             margin: 0;
             padding: 0;
+            height: 100vh;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #0f2027, #2c5364, #ff512f, #dd2476, #1f4037, #99f2c8);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            font-family: 'Orbitron', 'Courier New', Courier, monospace;
         }
+        @keyframes gradientBG {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        /* Typewriter effect */
         #typewriter {
-            font-size: 2em;
-            color: red;
-            margin-top: 5%;
-            text-align: center;
+            color: #ffffff;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff512f, 0 0 20px #dd2476;
+            letter-spacing: 2px;
+            border-right: 4px solid #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            animation: typing 2.8s steps(30, end) forwards, blink 0.7s step-end infinite alternate;
+            margin-bottom: 40px;
         }
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 350px; }
+        }
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
+        /* Countdown flip animation */
         #countdown {
-            margin-top: 20px;
-            font-size: 2em;
-            color: white;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 35px;
+            margin-top: 15px;
         }
-        .units {
-            font-size: 0.8em;
-            color: gray;
+        .flip-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        #thankYouMessage {
-            font-size: 2em;
-            color: lime;
-            margin-top: 30px;
+        .flip-card {
+            background: #222831;
+            color: #ff512f;
+            font-size: 2.5em;
+            width: 70px;
+            height: 80px;
+            border-radius: 10px;
+            box-shadow: 0 4px 24px #000a, 0 0 10px #dd2476;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            position: relative;
+            transition: transform 0.3s cubic-bezier(.55,.06,.68,.19);
         }
+        .flip-label {
+            color: #fff;
+            font-size: 1em;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        /* Animated glowing button */
+        .glow-btn {
+            padding: 18px 45px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(90deg,#ff512f,#dd2476);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 0 20px #ff512f88, 0 0 40px #dd247688;
+            transition: transform 0.15s, box-shadow 0.2s;
+            margin-top: 35px;
+            outline: none;
+            letter-spacing: 2px;
+        }
+        .glow-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 40px #ff512faa, 0 0 80px #dd2476aa;
+            background: linear-gradient(90deg,#dd2476,#ff512f);
+        }
+        /* Footer */
         footer {
-            margin-top: 30px;
-            font-size: 0.9em;
-            color: gray;
+            margin-top: 40px;
+            color: #ffffffa0;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px #000;
+        }
+        @media (max-width: 600px) {
+            #countdown {
+                gap: 10px;
+            }
+            .flip-card {
+                font-size: 1.3em;
+                width: 38px;
+                height: 45px;
+            }
+            .glow-btn {
+                padding: 10px 15px;
+                font-size: 1em;
+            }
+            #typewriter {
+                font-size: 1.2em;
+                width: 180px;
+            }
         }
     </style>
+    <!-- Optional Orbitron font for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="typewriter">Thank you for playing!</div>
+    <div id="typewriter"></div>
     <div id="countdown">
-        <span id="days">00</span><span class="units">D</span>.
-        <span id="hours">00</span><span class="units">Hr's</span>.
-        <span id="minutes">00</span><span class="units">mins</span>.
-        <span id="seconds">00</span><span class="units">s</span>
-    </div>
-    <footer>The release date is May 26, 2025. Get ready!</footer>
-
-    <script>
-        // Release date (UTC) - May 26, 2025
-        const releaseDate = new Date('2025-05-26T00:00:00Z');
-
-        // DOM Elements
-        const daysElement = document.getElementById("days");
-        const hoursElement = document.getElementById("hours");
-        const minutesElement = document.getElementById("minutes");
-        const secondsElement = document.getElementById("seconds");
-
-        function updateCountdown() {
-            const now = new Date();
-            const timeRemaining = releaseDate - now;
-
-            if (timeRemaining <= 0) {
-                // If the release date has passed
-                daysElement.textContent = "00";
-                hoursElement.textContent = "00";
-                minutesElement.textContent = "00";
-                secondsElement.textContent = "00";
-                return;
-            }
-
-            // Calculate time components
-            const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-            // Update DOM
-            daysElement.textContent = String(days).padStart(2, '0');
-            hoursElement.textContent = String(hours).padStart(2, '0');
-            minutesElement.textContent = String(minutes).padStart(2, '0');
-            secondsElement.textContent = String(seconds).padStart(2, '0');
-
-            // Continue updating
-            setTimeout(updateCountdown, 1000);
-        }
-
-        // Start the countdown
-        updateCountdown();
-    </script>
-</body>
-    <button onclick="location.href='Preview.html'" style="margin-top: 20px; padding: 10px 20px; font-size: 1.2em; background-color: red; color: white; border: none; border-radius: 5px; cursor: pointer;">
-    See Preview of Game
-</button>
-</html>
+        <div class="flip-unit">
+            <div*
+
