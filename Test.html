@@ -5,11 +5,8 @@
   <title>3D Horror Game</title>
   <style>
     body { margin: 0; overflow: hidden; background: #000; }
-    #overlayText {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      color: #f00; font-size: 32px; text-shadow: 2px 2px #000; z-index: 20;
-      pointer-events: none; font-family: monospace;
-    }
+    #overlayText { position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      color: #f00; font-size: 32px; text-shadow: 2px 2px #000; z-index: 20; pointer-events: none; font-family: monospace;}
     #gameover, #youwin { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); color: #fff; font-size: 3em; font-family: monospace; text-align: center; align-items: center; justify-content: center; flex-direction: column; z-index: 100; }
     #gameover.show, #youwin.show { display: flex; }
     #keypad { display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #222; border: 2px solid #f00; padding: 30px; border-radius: 10px; z-index: 99; font-family: monospace; color: #fff;}
@@ -17,6 +14,37 @@
     #keypad button { font-size: 1.5em; margin-top: 10px; background: #400; color: #fff; border: none; padding: 10px 30px; cursor: pointer; border-radius: 6px;}
     .paperNote { position: fixed; color: #0f0; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #111; padding: 25px 40px; border: 2px solid #0f0; font-size: 2em; font-family: monospace; border-radius: 10px; z-index: 80; display: none;}
     #hint { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 1.3em; background: rgba(0,0,0,0.5); padding: 6px 18px; border-radius: 8px; pointer-events: none; z-index: 50; font-family: monospace;}
+
+    /* Context Menu Styles */
+    #custom-context-menu {
+      display: none; position: fixed; z-index: 9999; min-width: 210px; background: #222; border: 2px solid #888; border-radius: 10px; box-shadow: 0 2px 15px #000a;
+      font-family: monospace; color: #fff; user-select: none; padding: 3px 0;
+    }
+    #custom-context-menu .menu-item {
+      padding: 9px 22px 9px 12px; cursor: pointer; display: flex; align-items: center; font-size: 1.15em; border-bottom: 1px solid #333;
+    }
+    #custom-context-menu .menu-item:last-child { border-bottom: none;}
+    #custom-context-menu .icon { width: 1.5em; display: inline-block; text-align: center; margin-right: 10px;}
+    #custom-context-menu .menu-item:hover { background: #444; }
+
+    /* Mods Bar Styles */
+    #mod-bar {
+      display: none; position: fixed; top: 100px; left: 60vw; min-width: 210px; background: #222; border: 2px solid #05f; border-radius: 10px;
+      box-shadow: 0 2px 15px #000a; font-family: monospace; color: #fff; z-index: 9999; padding: 7px 0;
+      cursor: move; user-select: none;
+    }
+    #mod-bar .mod-title {
+      font-size: 1.12em; text-align: center; color: #d0d; font-weight: bold; margin-bottom: 8px; cursor: move;
+      border-bottom: 1px solid #333; padding-bottom: 5px;
+    }
+    #mod-bar .mod-btn {
+      padding: 8px 18px 8px 10px; cursor: pointer; display: flex; align-items: center; font-size: 1.05em; border-bottom: 1px solid #333;
+      background: none; color: inherit; border: none; width: 100%; text-align: left;
+    }
+    #mod-bar .mod-btn:last-child { border-bottom: none;}
+    #mod-bar .icon { width: 1.5em; display: inline-block; text-align: center; margin-right: 10px;}
+    #mod-bar .mod-btn.active { color: #ff0; }
+    #mod-bar .mod-btn:hover { background: #444; }
   </style>
 </head>
 <body>
@@ -35,28 +63,59 @@
 </div>
 <div id="paperPopup" class="paperNote"></div>
 <div id="game-canvas"></div>
+
+<!-- Custom context menu -->
+<div id="custom-context-menu">
+  <div class="menu-item" id="ctx-screenshot"><span class="icon">📸</span> Screenshot</div>
+  <div class="menu-item" id="ctx-refresh"><span class="icon">🔄</span> Refresh</div>
+  <div class="menu-item" id="ctx-fullscreen"><span class="icon">🖥️</span> Fullscreen</div>
+  <div class="menu-item" id="ctx-mods"><span class="icon">🛠️</span> Mods</div>
+</div>
+
+<!-- Mods draggable bar -->
+<div id="mod-bar">
+  <div class="mod-title"><span class="icon">🛠️</span>Mods Menu</div>
+  <button class="mod-btn" id="mod-god"><span class="icon">💀</span> Godmode</button>
+  <button class="mod-btn" id="mod-speed"><span class="icon">⚡</span> Change Speed</button>
+  <button class="mod-btn" id="mod-setcode"><span class="icon">🔢</span> Set Code</button>
+  <button class="mod-btn" id="mod-crash"><span class="icon">💥</span> Crash Game</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const mapSize = 20;
-const cubeSize = 1;
-const wallChance = 0.3;
-const BASE_PLAYER_SPEED = 2.2; // units per second, realistic walk/run
+/* === Game state variables (same from before, see previous code for all details!) === */
+const mapSize = 20, cubeSize = 1, wallChance = 0.3;
+let BASE_PLAYER_SPEED = 2.2, FAST_PLAYER_SPEED = 5.2;
+let playerSpeed = BASE_PLAYER_SPEED;
 const monsterChaseDist = 4;
+let godmode = false;
 let code = Math.floor(1000 + Math.random()*9000).toString();
 let paperLocations = [];
 let paperFound = Array(5).fill(false);
 let exitUnlocked = false, keypadOpen = false;
 let player, monster, exitDoor, scene, camera, renderer, map = [];
-let keys = {};
+let keys = {}, modsActive = false;
 let lastPos = {x: 0, z: 0};
-let yaw = 0; // For camera/player rotation
-let lastTime = performance.now();
+let yaw = 0, lastTime = performance.now();
+let gameCrashed = false;
+
+// Generate 5 unique, walkable, non-overlapping paper locations
+function generatePapers() {
+  paperLocations = [];
+  while (paperLocations.length < 5) {
+    let px = Math.floor(Math.random() * (mapSize-4)) - mapSize/2 + 2;
+    let pz = Math.floor(Math.random() * (mapSize-4)) - mapSize/2 + 2;
+    if ((Math.abs(px)<2 && Math.abs(pz)<2) || (Math.abs(px-(mapSize/2-2))<2 && Math.abs(pz-(mapSize/2-2))<2)) continue;
+    if (paperLocations.some(loc => loc.x===px&&loc.z===pz)) continue;
+    paperLocations.push({x:px,z:pz});
+  }
+}
+generatePapers();
 
 function showHint(msg) {
   document.getElementById("hint").textContent = msg;
   setTimeout(()=>{document.getElementById("hint").textContent="";},2000);
 }
-
 function showPaper(index) {
   let div = document.getElementById("paperPopup");
   div.textContent = `You found a note!\nThe code is: ${code}`;
@@ -89,25 +148,11 @@ function submitKeypad() {
   }
 }
 
-// Generate 5 unique, walkable, non-overlapping paper locations
-function generatePapers() {
-  paperLocations = [];
-  while (paperLocations.length < 5) {
-    let px = Math.floor(Math.random() * (mapSize-4)) - mapSize/2 + 2;
-    let pz = Math.floor(Math.random() * (mapSize-4)) - mapSize/2 + 2;
-    // Avoid start, exit, borders, or duplicates
-    if ((Math.abs(px)<2 && Math.abs(pz)<2) ||
-        (Math.abs(px-(mapSize/2-2))<2 && Math.abs(pz-(mapSize/2-2))<2)) continue;
-    if (paperLocations.some(loc => loc.x===px&&loc.z===pz)) continue;
-    paperLocations.push({x:px,z:pz});
-  }
-}
-generatePapers();
-
 function isBlocked(x, z) {
   return map.some(b => Math.abs(b.x - x) < 0.7 && Math.abs(b.z - z) < 0.7);
 }
 
+// ===== GAME LOGIC =====
 function startGame() {
 scene = new THREE.Scene();
 camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -180,22 +225,17 @@ let dragging = false, lastScreenX = 0;
 window.addEventListener('mousedown', e => {dragging=true; lastScreenX=e.screenX;});
 window.addEventListener('mouseup', ()=>{dragging=false;});
 window.addEventListener('mousemove', e => {
-  if (dragging) {
-    yaw -= (e.screenX-lastScreenX)*0.01;
-    lastScreenX = e.screenX;
-  }
+  if (dragging) { yaw -= (e.screenX-lastScreenX)*0.01; lastScreenX = e.screenX; }
 });
 window.addEventListener('touchstart', e => {dragging=true; lastScreenX=e.touches[0].screenX;});
 window.addEventListener('touchend', ()=>{dragging=false;});
 window.addEventListener('touchmove', e => {
-  if (dragging) {
-    yaw -= (e.touches[0].screenX-lastScreenX)*0.01;
-    lastScreenX = e.touches[0].screenX;
-  }
+  if (dragging) { yaw -= (e.touches[0].screenX-lastScreenX)*0.01; lastScreenX = e.touches[0].screenX; }
 });
 
 // Animation/game loop
 function animate(now) {
+  if(gameCrashed) return;
   requestAnimationFrame(animate);
   let dt = Math.min((now-lastTime)/1000, 0.033); // max 30 FPS step
   lastTime = now;
@@ -215,11 +255,10 @@ function animate(now) {
     moveX += Math.cos(yaw) * strafe;
     moveZ -= Math.sin(yaw) * strafe;
   }
-  // Normalize so diagonal isn't faster
   let len = Math.sqrt(moveX*moveX+moveZ*moveZ);
   if(len>0) { moveX/=len; moveZ/=len; }
-  let nextX = player.position.x + moveX*BASE_PLAYER_SPEED*dt;
-  let nextZ = player.position.z + moveZ*BASE_PLAYER_SPEED*dt;
+  let nextX = player.position.x + moveX*playerSpeed*dt;
+  let nextZ = player.position.z + moveZ*playerSpeed*dt;
   if (!isBlocked(nextX, nextZ)) {
     player.position.x = nextX;
     player.position.z = nextZ;
@@ -240,7 +279,6 @@ function animate(now) {
   let dz = player.position.z - monster.position.z;
   let dist = Math.sqrt(dx*dx + dz*dz);
   if (dist < monsterChaseDist) {
-    // Chase, but obey collision
     let mLen = Math.sqrt(dx*dx + dz*dz);
     let mX = (dx/mLen) * 0.18;
     let mZ = (dz/mLen) * 0.18;
@@ -249,8 +287,6 @@ function animate(now) {
       monster.position.z += mZ;
     }
   }
-
-  // Monster collision with blocks - bounce back if stuck
   if (isBlocked(monster.position.x, monster.position.z)) {
     monster.position.x = lastPos.x;
     monster.position.z = lastPos.z;
@@ -259,7 +295,7 @@ function animate(now) {
   lastPos.z = monster.position.z;
 
   // Collision: Player & monster
-  if (player.position.distanceTo(monster.position) < 1) {
+  if (!godmode && player.position.distanceTo(monster.position) < 1) {
     document.getElementById('gameover').classList.add('show');
     return;
   }
@@ -269,7 +305,6 @@ function animate(now) {
     if (!paperFound[i] && Math.abs(player.position.x - paperLocations[i].x)<0.7 && Math.abs(player.position.z - paperLocations[i].z)<0.7) {
       showPaper(i);
       paperFound[i]=true;
-      // Remove paper from scene
       let obj = scene.getObjectByName("paper"+i);
       if(obj) scene.remove(obj);
     }
@@ -296,6 +331,102 @@ startGame();
 document.getElementById('keypadInput').addEventListener('keydown',function(e){
   if(e.key==='Enter') submitKeypad();
 });
+
+// ==== CONTEXT MENU LOGIC ====
+const ctxMenu = document.getElementById('custom-context-menu');
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  ctxMenu.style.display = 'block';
+  ctxMenu.style.left = `${e.clientX}px`;
+  ctxMenu.style.top = `${e.clientY}px`;
+});
+document.addEventListener('click', function(e) {
+  if (!ctxMenu.contains(e.target)) ctxMenu.style.display = 'none';
+});
+// Actions
+document.getElementById('ctx-screenshot').onclick = function() {
+  ctxMenu.style.display = 'none';
+  try {
+    let url = renderer.domElement.toDataURL();
+    let a = document.createElement('a');
+    a.href = url; a.download = 'screenshot.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showHint("Screenshot saved!");
+  } catch { showHint("Screenshot failed."); }
+};
+document.getElementById('ctx-refresh').onclick = function() {
+  ctxMenu.style.display = 'none';
+  location.reload();
+};
+document.getElementById('ctx-fullscreen').onclick = function() {
+  ctxMenu.style.display = 'none';
+  let d = document.documentElement;
+  if (d.requestFullscreen) d.requestFullscreen();
+  else if (d.mozRequestFullScreen) d.mozRequestFullScreen();
+  else if (d.webkitRequestFullscreen) d.webkitRequestFullscreen();
+  else if (d.msRequestFullscreen) d.msRequestFullscreen();
+};
+document.getElementById('ctx-mods').onclick = function() {
+  ctxMenu.style.display = 'none';
+  let pass = prompt("Enter mods password:");
+  if (pass === "2012") {
+    showModBar();
+  } else if (pass !== null) {
+    showHint("Wrong password.");
+  }
+};
+
+// ==== MOD BAR LOGIC ====
+const modBar = document.getElementById('mod-bar');
+function showModBar() {
+  modBar.style.display = 'block';
+}
+function hideModBar() {
+  modBar.style.display = 'none';
+}
+document.getElementById('mod-god').onclick = function() {
+  godmode = !godmode;
+  this.classList.toggle('active', godmode);
+  showHint(godmode ? "Godmode ON" : "Godmode OFF");
+};
+document.getElementById('mod-speed').onclick = function() {
+  playerSpeed = (playerSpeed === BASE_PLAYER_SPEED) ? FAST_PLAYER_SPEED : BASE_PLAYER_SPEED;
+  this.classList.toggle('active', playerSpeed !== BASE_PLAYER_SPEED);
+  showHint(playerSpeed !== BASE_PLAYER_SPEED ? "Fast Speed!" : "Normal Speed");
+};
+document.getElementById('mod-setcode').onclick = function() {
+  let newCode = prompt("Set new 4 digit code:", code);
+  if (newCode && /^\d{4}$/.test(newCode)) {
+    code = newCode;
+    showHint("New code set!");
+  } else if (newCode !== null) {
+    showHint("Invalid code.");
+  }
+};
+document.getElementById('mod-crash').onclick = function() {
+  showHint("Game crashed!");
+  gameCrashed = true;
+  hideModBar();
+};
+
+let drag = false, dragOffsetX = 0, dragOffsetY = 0;
+modBar.querySelector('.mod-title').onmousedown = function(e) {
+  drag = true;
+  dragOffsetX = e.clientX - modBar.offsetLeft;
+  dragOffsetY = e.clientY - modBar.offsetTop;
+  document.body.style.userSelect = 'none';
+};
+window.onmousemove = function(e) {
+  if (drag) {
+    modBar.style.left = (e.clientX - dragOffsetX) + 'px';
+    modBar.style.top = (e.clientY - dragOffsetY) + 'px';
+  }
+};
+window.onmouseup = function() {
+  drag = false; document.body.style.userSelect = '';
+};
 </script>
 </body>
 </html>
