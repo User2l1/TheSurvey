@@ -5,66 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D Horror Game</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background-color: black;
-    }
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: black; }
     #password-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: black;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: black; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 10;
     }
     #password-screen input {
-      font-size: 24px;
-      padding: 10px;
-      margin: 10px 0;
-      width: 300px;
-      text-align: center;
-      border: 2px solid #444;
-      border-radius: 5px;
-      background-color: #222;
-      color: #fff;
+      font-size: 24px; padding: 10px; margin: 10px 0; width: 300px;
+      text-align: center; border: 2px solid #444; border-radius: 5px;
+      background-color: #222; color: #fff;
     }
     #password-screen button {
-      padding: 10px 20px;
-      font-size: 20px;
-      border: none;
-      border-radius: 5px;
-      background-color: #444;
-      color: #fff;
-      cursor: pointer;
+      padding: 10px 20px; font-size: 20px; border: none; border-radius: 5px;
+      background-color: #444; color: #fff; cursor: pointer;
     }
-    #password-screen button:hover {
-      background-color: #666;
-    }
-    #game-container {
-      display: none;
-    }
+    #password-screen button:hover { background-color: #666; }
+    #game-container { display: none; }
     #overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
     }
     .pixel-text {
-      color: red;
-      font-size: 32px;
-      text-shadow: 2px 2px black;
-      position: absolute;
-      top: 20px;
-      left: 20px;
+      color: red; font-size: 32px; text-shadow: 2px 2px black;
+      position: absolute; top: 20px; left: 20px;
     }
   </style>
 </head>
@@ -79,15 +43,12 @@
 
   <!-- Game Container -->
   <div id="game-container">
-    <!-- 3D Scene -->
     <div id="game-canvas"></div>
-    <!-- Overlay -->
     <div id="overlay">
       <div class="pixel-text">Find the Exit...</div>
     </div>
   </div>
 
-  <!-- Three.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     // Password Protection
@@ -98,135 +59,174 @@
     const passwordSubmit = document.getElementById("password-submit");
     const passwordError = document.getElementById("password-error");
 
+    let gameStarted = false;
+
     passwordSubmit.addEventListener("click", () => {
       if (passwordInput.value === PASSWORD) {
-        passwordScreen.style.display = "none"; // Hide password screen
-        gameContainer.style.display = "block"; // Show game
+        passwordScreen.style.display = "none";
+        gameContainer.style.display = "block";
+        if (!gameStarted) {
+          gameStarted = true;
+          initGame();
+        }
       } else {
         passwordError.style.display = "block";
       }
     });
 
-    // Three.js Setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('game-canvas').appendChild(renderer.domElement);
+    // Game logic only starts after password
+    function initGame() {
+      // Three.js Setup
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.getElementById('game-canvas').appendChild(renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
-    scene.add(ambientLight);
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambientLight);
 
-    const flashlight = new THREE.SpotLight(0xffffff, 1, 10, Math.PI / 8, 0.5);
-    flashlight.position.set(0, 5, 0);
-    flashlight.target.position.set(0, 0, 0);
-    scene.add(flashlight);
-    scene.add(flashlight.target);
+      const flashlight = new THREE.SpotLight(0xffffff, 1, 10, Math.PI / 8, 0.5);
+      flashlight.position.set(0, 5, 0);
+      flashlight.target.position.set(0, 0, 0);
+      scene.add(flashlight);
+      scene.add(flashlight.target);
 
-    // Map (3D Cubes)
-    const mapSize = 10;
-    const cubeSize = 1;
-    const map = [];
-    for (let x = -mapSize / 2; x < mapSize / 2; x++) {
-      for (let z = -mapSize / 2; z < mapSize / 2; z++) {
-        if (Math.random() > 0.7) { // Randomly place walls
-          const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-          const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-          const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-          cube.position.set(x, 0, z);
-          scene.add(cube);
-          map.push({ x, z });
+      // Map (3D Cubes)
+      const mapSize = 10;
+      const cubeSize = 1;
+      const map = [];
+      for (let x = -mapSize / 2; x < mapSize / 2; x++) {
+        for (let z = -mapSize / 2; z < mapSize / 2; z++) {
+          if (Math.random() > 0.7) {
+            const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.set(x, 0, z);
+            scene.add(cube);
+            map.push({ x, z });
+          }
         }
       }
-    }
 
-    // Exit
-    const exitGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
-    const exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-    const exit = new THREE.Mesh(exitGeometry, exitMaterial);
-    exit.position.set(mapSize / 2 - 1, 0.5, mapSize / 2 - 1);
-    scene.add(exit);
+      // Exit
+      const exitGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+      const exitMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+      const exit = new THREE.Mesh(exitGeometry, exitMaterial);
+      exit.position.set(mapSize / 2 - 1, 0.5, mapSize / 2 - 1);
+      scene.add(exit);
 
-    // Player
-    const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-    const player = new THREE.Mesh(playerGeometry, playerMaterial);
-    player.position.set(0, 0.5, 0);
-    scene.add(player);
+      // Player
+      const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+      const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+      const player = new THREE.Mesh(playerGeometry, playerMaterial);
+      player.position.set(0, 0.5, 0);
+      scene.add(player);
 
-    // Monster
-    const monsterGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const monsterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
-    const monster = new THREE.Mesh(monsterGeometry, monsterMaterial);
-    monster.position.set(-mapSize / 2 + 1, 0.5, -mapSize / 2 + 1);
-    scene.add(monster);
+      // Monster with patrol points and anti-stuck
+      const monsterGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+      const monsterMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+      const monster = new THREE.Mesh(monsterGeometry, monsterMaterial);
+      monster.position.set(-mapSize / 2 + 1, 0.5, -mapSize / 2 + 1);
+      scene.add(monster);
 
-    // Camera Position
-    camera.position.y = 5;
-    camera.lookAt(player.position);
+      // Monster patrol points
+      const patrolPoints = [
+        { x: -mapSize/2+1, z: -mapSize/2+1 },
+        { x: mapSize/2-2, z: -mapSize/2+1 },
+        { x: mapSize/2-2, z: mapSize/2-2 },
+        { x: -mapSize/2+1, z: mapSize/2-2 }
+      ];
+      let currentPatrol = 0;
+      let monsterStuckCounter = 0;
+      let lastMonsterPos = {x: monster.position.x, z: monster.position.z};
 
-    // Movement Controls
-    const keys = {};
-    window.addEventListener("keydown", (e) => (keys[e.key] = true));
-    window.addEventListener("keyup", (e) => (keys[e.key] = false));
+      // Camera Position
+      camera.position.y = 5;
+      camera.lookAt(player.position);
 
-    function movePlayer() {
-      const speed = 0.1;
-      if (keys["ArrowUp"] || keys["w"]) player.position.z -= speed;
-      if (keys["ArrowDown"] || keys["s"]) player.position.z += speed;
-      if (keys["ArrowLeft"] || keys["a"]) player.position.x -= speed;
-      if (keys["ArrowRight"] || keys["d"]) player.position.x += speed;
-    }
+      // Movement Controls
+      const keys = {};
+      window.addEventListener("keydown", (e) => (keys[e.key] = true));
+      window.addEventListener("keyup", (e) => (keys[e.key] = false));
 
-    // Monster Pathfinding
-    function moveMonster() {
-      const speed = 0.05;
-      const dx = player.position.x - monster.position.x;
-      const dz = player.position.z - monster.position.z;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-
-      if (distance > 0.1) {
-        monster.position.x += (dx / distance) * speed;
-        monster.position.z += (dz / distance) * speed;
-
-        // Leave a mark where the monster moves
-        const markGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-        const markMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        const mark = new THREE.Mesh(markGeometry, markMaterial);
-        mark.position.set(monster.position.x, 0.1, monster.position.z);
-        scene.add(mark);
-      }
-    }
-
-    // Collision Detection
-    function checkCollision() {
-      const distance = player.position.distanceTo(monster.position);
-      if (distance < 1) {
-        alert("Game Over! The monster caught you.");
-        window.location.reload();
+      function movePlayer() {
+        const speed = 0.1;
+        if (keys["ArrowUp"] || keys["w"]) player.position.z -= speed;
+        if (keys["ArrowDown"] || keys["s"]) player.position.z += speed;
+        if (keys["ArrowLeft"] || keys["a"]) player.position.x -= speed;
+        if (keys["ArrowRight"] || keys["d"]) player.position.x += speed;
       }
 
-      if (player.position.distanceTo(exit.position) < 1) {
-        alert("You Win! You found the exit.");
-        window.location.reload();
+      // Monster AI
+      function moveMonster() {
+        const chaseSpeed = 0.09;
+        const patrolSpeed = 0.05;
+        const dx = player.position.x - monster.position.x;
+        const dz = player.position.z - monster.position.z;
+        const distToPlayer = Math.sqrt(dx * dx + dz * dz);
+
+        if (distToPlayer < 0.7) {
+          // Chase player
+          monster.position.x += (dx / distToPlayer) * chaseSpeed;
+          monster.position.z += (dz / distToPlayer) * chaseSpeed;
+          monsterStuckCounter = 0; // reset anti-stuck during chase
+        } else {
+          // Patrol
+          const patrol = patrolPoints[currentPatrol];
+          const pdx = patrol.x - monster.position.x;
+          const pdz = patrol.z - monster.position.z;
+          const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+          if (pdist > 0.1) {
+            monster.position.x += (pdx / pdist) * patrolSpeed;
+            monster.position.z += (pdz / pdist) * patrolSpeed;
+          } else {
+            currentPatrol = (currentPatrol + 1) % patrolPoints.length;
+          }
+
+          // Anti-stuck: if monster doesn't move much for 120 frames, jump to next patrol point
+          if (
+            Math.abs(monster.position.x - lastMonsterPos.x) < 0.01 &&
+            Math.abs(monster.position.z - lastMonsterPos.z) < 0.01
+          ) {
+            monsterStuckCounter++;
+            if (monsterStuckCounter > 120) {
+              currentPatrol = (currentPatrol + 1) % patrolPoints.length;
+              monsterStuckCounter = 0;
+            }
+          } else {
+            monsterStuckCounter = 0;
+          }
+          lastMonsterPos = {x: monster.position.x, z: monster.position.z};
+        }
       }
+
+      // Collision Detection
+      function checkCollision() {
+        const distance = player.position.distanceTo(monster.position);
+        if (distance < 1) {
+          alert("Game Over! The monster caught you.");
+          window.location.reload();
+        }
+        if (player.position.distanceTo(exit.position) < 1) {
+          alert("You Win! You found the exit.");
+          window.location.reload();
+        }
+      }
+
+      // Game Loop
+      function animate() {
+        requestAnimationFrame(animate);
+        movePlayer();
+        moveMonster();
+        checkCollision();
+        flashlight.position.set(player.position.x, player.position.y + 2, player.position.z);
+        flashlight.target.position.set(player.position.x, 0, player.position.z);
+        renderer.render(scene, camera);
+      }
+      animate();
     }
-
-    // Game Loop
-    function animate() {
-      requestAnimationFrame(animate);
-      movePlayer();
-      moveMonster();
-      checkCollision();
-
-      // Update flashlight position
-      flashlight.position.set(player.position.x, player.position.y + 2, player.position.z);
-      flashlight.target.position.set(player.position.x, 0, player.position.z);
-
-      renderer.render(scene, camera);
-    }
-    animate();
   </script>
 </body>
 </html>
