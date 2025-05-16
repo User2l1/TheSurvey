@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>End Page</title>
+    <title>The End...</title>
     <style>
-        /* Animated gradient background */
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
         body {
             margin: 0;
             padding: 0;
@@ -15,128 +15,246 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(-45deg, #0f2027, #2c5364, #ff512f, #dd2476, #1f4037, #99f2c8);
-            background-size: 400% 400%;
-            animation: gradientBG 10s ease infinite;
-            font-family: 'Orbitron', 'Courier New', Courier, monospace;
+            background: radial-gradient(ellipse at 50% 60%, #111 70%, #000 100%);
+            position: relative;
         }
-        @keyframes gradientBG {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
+        /* Fog animation for horror effect */
+        #fog {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .fog-layer {
+            position: absolute;
+            width: 200vw;
+            height: 200vh;
+            background: url('https://i.ibb.co/8DdW8vN/fog.png') repeat;
+            opacity: 0.15;
+            animation: fogmove 60s linear infinite;
+        }
+        .fog-layer2 {
+            opacity: 0.12;
+            animation: fogmove2 90s linear infinite;
+        }
+        @keyframes fogmove {
+            0% { transform: translate(0,0) scale(1.1);}
+            100% { transform: translate(-300px, 60px) scale(1.1);}
+        }
+        @keyframes fogmove2 {
+            0% { transform: translate(0,0) scale(1);}
+            100% { transform: translate(180px, -90px) scale(1);}
         }
 
-        /* Typewriter effect */
+        /* Typewriter horror effect */
         #typewriter {
-            color: #ffffff;
-            font-size: 2.5em;
-            font-weight: bold;
-            text-shadow: 0 0 10px #ff512f, 0 0 20px #dd2476;
-            letter-spacing: 2px;
-            border-right: 4px solid #fff;
+            font-family: 'Creepster', cursive;
+            color: #ff2f2f;
+            font-size: 2.6em;
+            text-shadow: 0 0 20px #ff2f2f88, 0 0 30px #fff2;
+            border-right: 4px solid #ff2f2f;
             white-space: nowrap;
             overflow: hidden;
             width: 0;
-            animation: typing 2.8s steps(30, end) forwards, blink 0.7s step-end infinite alternate;
-            margin-bottom: 40px;
-        }
-        @keyframes typing {
-            from { width: 0; }
-            to { width: 350px; }
+            margin-bottom: 45px;
+            letter-spacing: 2px;
+            z-index: 2;
+            animation: blink 0.6s infinite alternate;
         }
         @keyframes blink {
-            50% { border-color: transparent; }
+            0% { border-color: #ff2f2f; }
+            49% { border-color: #ff2f2f; }
+            50% { border-color: transparent;}
+            100% { border-color: transparent;}
         }
 
-        /* Countdown flip animation */
+        /* Flicker animation for timer */
         #countdown {
             display: flex;
-            gap: 20px;
+            gap: 18px;
             justify-content: center;
             align-items: flex-end;
-            margin-bottom: 35px;
-            margin-top: 15px;
+            margin-bottom: 40px;
+            margin-top: 12px;
+            z-index: 2;
         }
-        .flip-unit {
+        .timer-unit {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .flip-card {
-            background: #222831;
-            color: #ff512f;
-            font-size: 2.5em;
+        .timer-card {
+            background: #181010e0;
+            color: #ff4444;
+            font-family: 'Creepster', cursive;
+            font-size: 2.3em;
             width: 70px;
             height: 80px;
-            border-radius: 10px;
-            box-shadow: 0 4px 24px #000a, 0 0 10px #dd2476;
+            border-radius: 8px;
+            box-shadow: 0 0 16px #3a0000, 0 0 32px #ff222222;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 5px;
-            position: relative;
-            transition: transform 0.3s cubic-bezier(.55,.06,.68,.19);
+            animation: flicker 2s infinite;
         }
-        .flip-label {
+        .timer-label {
             color: #fff;
             font-size: 1em;
             letter-spacing: 1px;
-            text-transform: uppercase;
+            text-shadow: 0 0 8px #ff2f2f44;
         }
-        /* Animated glowing button */
-        .glow-btn {
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            10% { opacity: 0.8; }
+            12% { opacity: 0.6; }
+            14% { opacity: 0.7; }
+            16% { opacity: 1; }
+            18% { opacity: 0.9; }
+            20% { opacity: 1; }
+            22% { opacity: 0.7; }
+            24% { opacity: 0.8; }
+            28% { opacity: 1; }
+            82% { opacity: 0.95; }
+        }
+
+        /* Eerie animated button */
+        .horror-btn {
             padding: 18px 45px;
             font-size: 1.3em;
-            font-weight: 600;
+            font-family: 'Creepster', cursive;
             color: #fff;
-            background: linear-gradient(90deg,#ff512f,#dd2476);
-            border: none;
-            border-radius: 30px;
+            background: linear-gradient(90deg, #d50000 40%, #111 100%);
+            border: 3px solid #ff4444;
+            border-radius: 18px;
             cursor: pointer;
-            box-shadow: 0 0 20px #ff512f88, 0 0 40px #dd247688;
-            transition: transform 0.15s, box-shadow 0.2s;
-            margin-top: 35px;
-            outline: none;
+            box-shadow: 0 0 24px #ff222288, 0 0 40px #0004;
             letter-spacing: 2px;
+            margin-top: 40px;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.2s, border 0.2s, box-shadow 0.2s, transform 0.15s;
+            z-index: 2;
+            animation: horrorPulse 3s infinite;
         }
-        .glow-btn:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 40px #ff512faa, 0 0 80px #dd2476aa;
-            background: linear-gradient(90deg,#dd2476,#ff512f);
+        .horror-btn:hover {
+            background: #111;
+            color: #ff2222;
+            border: 3px solid #fff;
+            transform: scale(1.07) rotate(-2deg);
+            box-shadow: 0 0 40px #d5000088, 0 0 80px #ff2f2faa;
+            text-shadow: 0 0 15px #ff2222;
         }
-        /* Footer */
+        @keyframes horrorPulse {
+            0%, 100% { box-shadow: 0 0 24px #ff222288, 0 0 40px #0004; }
+            40% { box-shadow: 0 0 40px #d5000077, 0 0 64px #ff2f2faa; }
+            60% { box-shadow: 0 0 16px #ff222288, 0 0 24px #0004; }
+        }
+
+        /* Footer - horror style */
         footer {
             margin-top: 40px;
-            color: #ffffffa0;
+            color: #fff;
             font-size: 1.1em;
             letter-spacing: 1px;
-            text-shadow: 0 0 8px #000;
+            text-shadow: 0 0 12px #a00, 0 0 6px #000;
+            z-index: 2;
+        }
+        .footer-date {
+            color: #ff2f2f;
+            font-family: 'Creepster', cursive;
+            font-size: 1.2em;
+            text-shadow: 0 0 8px #ff2f2faa;
         }
         @media (max-width: 600px) {
-            #countdown {
-                gap: 10px;
-            }
-            .flip-card {
-                font-size: 1.3em;
-                width: 38px;
-                height: 45px;
-            }
-            .glow-btn {
-                padding: 10px 15px;
-                font-size: 1em;
-            }
-            #typewriter {
-                font-size: 1.2em;
-                width: 180px;
-            }
+            #countdown { gap: 8px; }
+            .timer-card { font-size: 1.1em; width: 38px; height: 45px; }
+            .horror-btn { padding: 10px 15px; font-size: 1em;}
+            #typewriter { font-size: 1.2em; width: 180px;}
         }
     </style>
-    <!-- Optional Orbitron font for a modern look -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Fog overlay for horror effect -->
+    <div id="fog">
+        <div class="fog-layer"></div>
+        <div class="fog-layer fog-layer2"></div>
+    </div>
+
     <div id="typewriter"></div>
+
     <div id="countdown">
-        <div class="flip-unit">
-            <div*
-
+        <div class="timer-unit">
+            <div class="timer-card" id="days">00</div>
+            <div class="timer-label">Days</div>
+        </div>
+        <div class="timer-unit">
+            <div class="timer-card" id="hours">00</div>
+            <div class="timer-label">Hours</div>
+        </div>
+        <div class="timer-unit">
+            <div class="timer-card" id="minutes">00</div>
+            <div class="timer-label">Minutes</div>
+        </div>
+        <div class="timer-unit">
+            <div class="timer-card" id="seconds">00</div>
+            <div class="timer-label">Seconds</div>
+        </div>
+    </div>
+
+    <button class="horror-btn" onclick="location.href='Preview.html'">See Preview of Game</button>
+
+    <footer>
+        The darkness lifts on <span class="footer-date">May 26, 2025</span>.<br>Are you ready to face your fears?
+    </footer>
+
+    <script>
+        // Typewriter effect (horror message)
+        const typewriterText = "Thank you for playing... forever.";
+        const typewriterElem = document.getElementById('typewriter');
+        let twIdx = 0;
+        function typeWriter() {
+            if (twIdx < typewriterText.length) {
+                typewriterElem.textContent += typewriterText.charAt(twIdx);
+                twIdx++;
+                setTimeout(typeWriter, 70 + Math.random()*60);
+            }
+        }
+        setTimeout(typeWriter, 900); // slight delay for suspense
+
+        // Countdown logic
+        const releaseDate = new Date('2025-05-26T00:00:00Z');
+        const daysElem = document.getElementById("days");
+        const hoursElem = document.getElementById("hours");
+        const minutesElem = document.getElementById("minutes");
+        const secondsElem = document.getElementById("seconds");
+
+        function updateCountdown() {
+            const now = new Date();
+            let timeLeft = releaseDate - now;
+
+            if (timeLeft <= 0) {
+                daysElem.textContent = "00";
+                hoursElem.textContent = "00";
+                minutesElem.textContent = "00";
+                secondsElem.textContent = "00";
+                return;
+            }
+            const days = String(Math.floor(timeLeft / (1000 * 60 * 60 * 24))).padStart(2, '0');
+            const hours = String(Math.floor((timeLeft / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+            const minutes = String(Math.floor((timeLeft / (1000 * 60)) % 60)).padStart(2, '0');
+            const seconds = String(Math.floor((timeLeft / 1000) % 60)).padStart(2, '0');
+
+            daysElem.textContent = days;
+            hoursElem.textContent = hours;
+            minutesElem.textContent = minutes;
+            secondsElem.textContent = seconds;
+
+            setTimeout(updateCountdown, 1000);
+        }
+        updateCountdown();
+    </script>
+</body>
+</html>
