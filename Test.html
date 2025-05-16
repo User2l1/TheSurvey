@@ -8,49 +8,20 @@
     #overlayText {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
       color: #f00; font-size: 32px; text-shadow: 2px 2px #000; z-index: 20;
-      pointer-events: none;
-      font-family: monospace;
+      pointer-events: none; font-family: monospace;
     }
-    #gameover, #youwin {
-      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.95); color: #fff; font-size: 3em;
-      font-family: monospace; text-align: center; align-items: center; justify-content: center;
-      flex-direction: column; z-index: 100;
-    }
-    #gameover.show, #youwin.show {
-      display: flex;
-    }
-    #keypad {
-      display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%);
-      background: #222; border: 2px solid #f00; padding: 30px; border-radius: 10px; z-index: 99;
-      font-family: monospace; color: #fff;
-    }
-    #keypad input {
-      font-size: 2em; width: 120px; text-align: center; margin-bottom: 20px; background: #000; color: #fff; border: 1px solid #fff;
-    }
-    #keypad button {
-      font-size: 1.5em; margin-top: 10px; background: #400; color: #fff; border: none; padding: 10px 30px;
-      cursor: pointer; border-radius: 6px;
-    }
-    .paperNote {
-      position: fixed;
-      color: #0f0;
-      left: 50%; top: 50%; transform: translate(-50%,-50%);
-      background: #111; padding: 25px 40px; border: 2px solid #0f0;
-      font-size: 2em; font-family: monospace; border-radius: 10px; z-index: 80;
-      display: none;
-    }
-    #hint {
-      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
-      color: #fff; font-size: 1.3em; background: rgba(0,0,0,0.5); padding: 6px 18px; border-radius: 8px;
-      pointer-events: none; z-index: 50; font-family: monospace;
-    }
+    #gameover, #youwin { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); color: #fff; font-size: 3em; font-family: monospace; text-align: center; align-items: center; justify-content: center; flex-direction: column; z-index: 100; }
+    #gameover.show, #youwin.show { display: flex; }
+    #keypad { display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #222; border: 2px solid #f00; padding: 30px; border-radius: 10px; z-index: 99; font-family: monospace; color: #fff;}
+    #keypad input { font-size: 2em; width: 120px; text-align: center; margin-bottom: 20px; background: #000; color: #fff; border: 1px solid #fff;}
+    #keypad button { font-size: 1.5em; margin-top: 10px; background: #400; color: #fff; border: none; padding: 10px 30px; cursor: pointer; border-radius: 6px;}
+    .paperNote { position: fixed; color: #0f0; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #111; padding: 25px 40px; border: 2px solid #0f0; font-size: 2em; font-family: monospace; border-radius: 10px; z-index: 80; display: none;}
+    #hint { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 1.3em; background: rgba(0,0,0,0.5); padding: 6px 18px; border-radius: 8px; pointer-events: none; z-index: 50; font-family: monospace;}
   </style>
 </head>
 <body>
 <div id="overlayText">Find the exit and the code papers...</div>
 <div id="hint"></div>
-
 <div id="gameover"><div>GAME OVER<br><span style="font-size:0.5em;">The monster caught you.</span><br><button onclick="location.reload()">Retry</button></div></div>
 <div id="youwin"><div>YOU ESCAPED!<br><span style="font-size:0.5em;">You survived the horror.</span><br><button onclick="location.reload()">Play Again</button></div></div>
 <div id="keypad">
@@ -63,40 +34,23 @@
   <div id="keypadMsg" style="color:#f00; margin-top:10px;"></div>
 </div>
 <div id="paperPopup" class="paperNote"></div>
-
 <div id="game-canvas"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const mapSize = 20;
 const cubeSize = 1;
 const wallChance = 0.3;
-const playerSpeed = 0.6;
+const BASE_PLAYER_SPEED = 2.2; // units per second, realistic walk/run
 const monsterChaseDist = 4;
-let code = "";
+let code = Math.floor(1000 + Math.random()*9000).toString();
 let paperLocations = [];
 let paperFound = Array(5).fill(false);
-let exitUnlocked = false;
-let keypadOpen = false, canOpenKeypad = false;
+let exitUnlocked = false, keypadOpen = false;
 let player, monster, exitDoor, scene, camera, renderer, map = [];
 let keys = {};
 let lastPos = {x: 0, z: 0};
-
-// Generate random 4-digit code
-code = Math.floor(1000 + Math.random() * 9000).toString();
-
-// Generate 5 random paper locations not at start, exit, or overlapping
-function generatePapers() {
-  paperLocations = [];
-  while (paperLocations.length < 5) {
-    let px = Math.floor(Math.random() * (mapSize-2)) - mapSize/2 + 1;
-    let pz = Math.floor(Math.random() * (mapSize-2)) - mapSize/2 + 1;
-    // Avoid start, exit, or duplicates
-    if ((Math.abs(px)<2 && Math.abs(pz)<2) || (Math.abs(px-(mapSize/2-2))<2 && Math.abs(pz-(mapSize/2-2))<2)) continue;
-    if (paperLocations.some(loc => loc.x===px&&loc.z===pz)) continue;
-    paperLocations.push({x:px,z:pz});
-  }
-}
-generatePapers();
+let yaw = 0; // For camera/player rotation
+let lastTime = performance.now();
 
 function showHint(msg) {
   document.getElementById("hint").textContent = msg;
@@ -135,22 +89,37 @@ function submitKeypad() {
   }
 }
 
-// Main game setup
+// Generate 5 unique, walkable, non-overlapping paper locations
+function generatePapers() {
+  paperLocations = [];
+  while (paperLocations.length < 5) {
+    let px = Math.floor(Math.random() * (mapSize-4)) - mapSize/2 + 2;
+    let pz = Math.floor(Math.random() * (mapSize-4)) - mapSize/2 + 2;
+    // Avoid start, exit, borders, or duplicates
+    if ((Math.abs(px)<2 && Math.abs(pz)<2) ||
+        (Math.abs(px-(mapSize/2-2))<2 && Math.abs(pz-(mapSize/2-2))<2)) continue;
+    if (paperLocations.some(loc => loc.x===px&&loc.z===pz)) continue;
+    paperLocations.push({x:px,z:pz});
+  }
+}
+generatePapers();
+
+function isBlocked(x, z) {
+  return map.some(b => Math.abs(b.x - x) < 0.7 && Math.abs(b.z - z) < 0.7);
+}
+
 function startGame() {
-// THREE.js scene
 scene = new THREE.Scene();
 camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('game-canvas').appendChild(renderer.domElement);
 
-// Map generation (walls array)
+// Map generation
 map = [];
 for (let x = -mapSize/2; x < mapSize/2; x++) {
   for (let z = -mapSize/2; z < mapSize/2; z++) {
-    // Border always wall, rest random
     if (x === -mapSize/2||x===mapSize/2-1||z===-mapSize/2||z===mapSize/2-1 || Math.random()<wallChance) {
-      // Don't wall start and exit or papers
       let skip=false;
       if ((Math.abs(x)<2 && Math.abs(z)<2) || (Math.abs(x-(mapSize/2-2))<2 && Math.abs(z-(mapSize/2-2))<2) ||
         paperLocations.some(loc=>loc.x===x&&loc.z===z)) skip=true;
@@ -165,7 +134,7 @@ for (let x = -mapSize/2; x < mapSize/2; x++) {
   }
 }
 
-// Papers
+// Papers (spawn once)
 for (let i=0;i<5;i++) {
   let paper = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.05,0.5),new THREE.MeshStandardMaterial({color:0xffff00}));
   paper.position.set(paperLocations[i].x, 0.55, paperLocations[i].z);
@@ -198,35 +167,68 @@ scene.add(flashlight);
 scene.add(flashlight.target);
 
 camera.position.y = 4;
+camera.position.x = player.position.x;
+camera.position.z = player.position.z-6;
+yaw = 0;
 
 // Controls
 window.addEventListener("keydown", e => keys[e.key]=true);
 window.addEventListener("keyup", e => keys[e.key]=false);
 
-// Collision helpers
-function isBlocked(x, z) {
-  return map.some(b => Math.abs(b.x - x) < 0.7 && Math.abs(b.z - z) < 0.7);
-}
+// Mouse/touch controls for camera rotation
+let dragging = false, lastScreenX = 0;
+window.addEventListener('mousedown', e => {dragging=true; lastScreenX=e.screenX;});
+window.addEventListener('mouseup', ()=>{dragging=false;});
+window.addEventListener('mousemove', e => {
+  if (dragging) {
+    yaw -= (e.screenX-lastScreenX)*0.01;
+    lastScreenX = e.screenX;
+  }
+});
+window.addEventListener('touchstart', e => {dragging=true; lastScreenX=e.touches[0].screenX;});
+window.addEventListener('touchend', ()=>{dragging=false;});
+window.addEventListener('touchmove', e => {
+  if (dragging) {
+    yaw -= (e.touches[0].screenX-lastScreenX)*0.01;
+    lastScreenX = e.touches[0].screenX;
+  }
+});
 
 // Animation/game loop
-function animate() {
+function animate(now) {
   requestAnimationFrame(animate);
+  let dt = Math.min((now-lastTime)/1000, 0.033); // max 30 FPS step
+  lastTime = now;
 
   // Player movement & collision
-  let nextX = player.position.x, nextZ = player.position.z;
-  if (keys["ArrowUp"] || keys["w"]) nextZ -= playerSpeed;
-  if (keys["ArrowDown"] || keys["s"]) nextZ += playerSpeed;
-  if (keys["ArrowLeft"] || keys["a"]) nextX -= playerSpeed;
-  if (keys["ArrowRight"] || keys["d"]) nextX += playerSpeed;
-  // Only move if not blocked
+  let dir = 0, moveX = 0, moveZ = 0;
+  if (keys["ArrowUp"] || keys["w"]) dir += 1;
+  if (keys["ArrowDown"] || keys["s"]) dir -= 1;
+  if (dir !== 0) {
+    moveX += Math.sin(yaw) * dir;
+    moveZ += Math.cos(yaw) * dir;
+  }
+  let strafe = 0;
+  if (keys["ArrowRight"] || keys["d"]) strafe += 1;
+  if (keys["ArrowLeft"] || keys["a"]) strafe -= 1;
+  if (strafe !== 0) {
+    moveX += Math.cos(yaw) * strafe;
+    moveZ -= Math.sin(yaw) * strafe;
+  }
+  // Normalize so diagonal isn't faster
+  let len = Math.sqrt(moveX*moveX+moveZ*moveZ);
+  if(len>0) { moveX/=len; moveZ/=len; }
+  let nextX = player.position.x + moveX*BASE_PLAYER_SPEED*dt;
+  let nextZ = player.position.z + moveZ*BASE_PLAYER_SPEED*dt;
   if (!isBlocked(nextX, nextZ)) {
     player.position.x = nextX;
     player.position.z = nextZ;
   }
 
-  // Camera follows player smoothly
-  camera.position.x += (player.position.x - camera.position.x)*0.2;
-  camera.position.z += (player.position.z - camera.position.z)*0.2;
+  // Camera follows player and angle
+  camera.position.x += ((player.position.x - Math.sin(yaw)*6) - camera.position.x)*0.15;
+  camera.position.z += ((player.position.z - Math.cos(yaw)*6) - camera.position.z)*0.15;
+  camera.position.y = 3 + Math.sin(now/3000)*0.05;
   camera.lookAt(player.position);
 
   // Flashlight follows player
@@ -237,15 +239,14 @@ function animate() {
   let dx = player.position.x - monster.position.x;
   let dz = player.position.z - monster.position.z;
   let dist = Math.sqrt(dx*dx + dz*dz);
-  let mx = monster.position.x, mz = monster.position.z;
-
   if (dist < monsterChaseDist) {
     // Chase, but obey collision
-    let moveX = (dx/dist) * 0.45;
-    let moveZ = (dz/dist) * 0.45;
-    if (!isBlocked(monster.position.x+moveX, monster.position.z+moveZ)) {
-      monster.position.x += moveX;
-      monster.position.z += moveZ;
+    let mLen = Math.sqrt(dx*dx + dz*dz);
+    let mX = (dx/mLen) * 0.18;
+    let mZ = (dz/mLen) * 0.18;
+    if (!isBlocked(monster.position.x+mX, monster.position.z+mZ)) {
+      monster.position.x += mX;
+      monster.position.z += mZ;
     }
   }
 
@@ -287,11 +288,11 @@ function animate() {
 
   renderer.render(scene, camera);
 }
-animate();
+lastTime=performance.now();
+animate(lastTime);
 }
 startGame();
 
-// Keypad input events
 document.getElementById('keypadInput').addEventListener('keydown',function(e){
   if(e.key==='Enter') submitKeypad();
 });
