@@ -4,80 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The End...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
         body {
             margin: 0;
             padding: 0;
             height: 100vh;
+            min-height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(ellipse at 50% 60%, #111 70%, #000 100%);
+            background: radial-gradient(ellipse at 50% 60%, #0a0a0a 70%, #000 100%);
             position: relative;
         }
-        /* Fog animation for horror effect */
+        /* Fog animation */
         #fog {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             pointer-events: none;
-            z-index: 1;
+            z-index: 10;
         }
         .fog-layer {
             position: absolute;
             width: 200vw;
             height: 200vh;
-            background: url('https://i.ibb.co/8DdW8vN/fog.png') repeat;
-            opacity: 0.15;
-            animation: fogmove 60s linear infinite;
+            background: url('https://static.vecteezy.com/system/resources/thumbnails/012/595/185/small/realistic-white-cloud-png.png') repeat;
+            opacity: 0.13;
+            animation: fogmove 70s linear infinite;
+            filter: blur(2px);
         }
         .fog-layer2 {
-            opacity: 0.12;
-            animation: fogmove2 90s linear infinite;
+            opacity: 0.10;
+            animation: fogmove2 110s linear infinite;
+            filter: blur(5px);
         }
         @keyframes fogmove {
             0% { transform: translate(0,0) scale(1.1);}
-            100% { transform: translate(-300px, 60px) scale(1.1);}
+            100% { transform: translate(-260px, 60px) scale(1.1);}
         }
         @keyframes fogmove2 {
             0% { transform: translate(0,0) scale(1);}
-            100% { transform: translate(180px, -90px) scale(1);}
+            100% { transform: translate(150px, -90px) scale(1);}
         }
 
         /* Typewriter horror effect */
         #typewriter {
             font-family: 'Creepster', cursive;
             color: #ff2f2f;
-            font-size: 2.6em;
-            text-shadow: 0 0 20px #ff2f2f88, 0 0 30px #fff2;
+            font-size: 2.7em;
+            text-shadow: 0 0 18px #ff2f2faa, 0 0 30px #fff5;
             border-right: 4px solid #ff2f2f;
             white-space: nowrap;
             overflow: hidden;
             width: 0;
-            margin-bottom: 45px;
+            margin-bottom: 48px;
             letter-spacing: 2px;
-            z-index: 2;
-            animation: blink 0.6s infinite alternate;
+            z-index: 20;
+            animation: blink 0.7s infinite alternate;
         }
         @keyframes blink {
             0% { border-color: #ff2f2f; }
-            49% { border-color: #ff2f2f; }
             50% { border-color: transparent;}
-            100% { border-color: transparent;}
+            100% { border-color: #ff2f2f; }
+        }
+        .flicker {
+            animation: flickerText 2.2s infinite;
+        }
+        @keyframes flickerText {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; text-shadow: 0 0 18px #ff2f2faa, 0 0 30px #fff5;}
+            20%, 22%, 24%, 55% { opacity: 0.7; text-shadow: 0 0 8px #a00;}
         }
 
-        /* Flicker animation for timer */
+        /* Countdown horror style */
         #countdown {
             display: flex;
-            gap: 18px;
+            gap: 20px;
             justify-content: center;
             align-items: flex-end;
             margin-bottom: 40px;
-            margin-top: 12px;
-            z-index: 2;
+            margin-top: 14px;
+            z-index: 20;
         }
         .timer-unit {
             display: flex;
@@ -97,7 +106,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 5px;
-            animation: flicker 2s infinite;
+            animation: flicker 2.8s infinite;
         }
         .timer-label {
             color: #fff;
@@ -136,7 +145,7 @@
             position: relative;
             overflow: hidden;
             transition: background 0.2s, border 0.2s, box-shadow 0.2s, transform 0.15s;
-            z-index: 2;
+            z-index: 20;
             animation: horrorPulse 3s infinite;
         }
         .horror-btn:hover {
@@ -155,12 +164,12 @@
 
         /* Footer - horror style */
         footer {
-            margin-top: 40px;
+            margin-top: 38px;
             color: #fff;
             font-size: 1.1em;
             letter-spacing: 1px;
             text-shadow: 0 0 12px #a00, 0 0 6px #000;
-            z-index: 2;
+            z-index: 20;
         }
         .footer-date {
             color: #ff2f2f;
@@ -183,7 +192,7 @@
         <div class="fog-layer fog-layer2"></div>
     </div>
 
-    <div id="typewriter"></div>
+    <div id="typewriter" class="flicker"></div>
 
     <div id="countdown">
         <div class="timer-unit">
@@ -212,17 +221,17 @@
 
     <script>
         // Typewriter effect (horror message)
-        const typewriterText = "Thank you for playing... forever.";
+        const typewriterText = "Thank you for playing...";
         const typewriterElem = document.getElementById('typewriter');
         let twIdx = 0;
         function typeWriter() {
             if (twIdx < typewriterText.length) {
                 typewriterElem.textContent += typewriterText.charAt(twIdx);
                 twIdx++;
-                setTimeout(typeWriter, 70 + Math.random()*60);
+                setTimeout(typeWriter, 80 + Math.random()*70);
             }
         }
-        setTimeout(typeWriter, 900); // slight delay for suspense
+        setTimeout(typeWriter, 700); // suspenseful delay
 
         // Countdown logic
         const releaseDate = new Date('2025-05-26T00:00:00Z');
